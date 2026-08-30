@@ -1,13 +1,2990 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<!-- Add CSS at the head of HTML file -->
-    <link rel="stylesheet" href="./css/main.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Microwave Virtual Lab</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080e;--sur:#0d0f1a;--card:#121520;--bdr:#1a2035;--bdr2:#24305a;
+  --blue:#1d5da8;--purple:#6d4dc7;--amber:#b5750a;--green:#1e8a52;--red:#c23b3b;
+  --txt:#dde4f0;--muted:#566480;--dim:#1a2540;
+  --mono:'Courier New',Courier,monospace;
+}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;font-size:14px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(29,93,168,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(29,93,168,.012) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;z-index:0}
+
+/* TOPBAR */
+#topbar{height:46px;background:var(--card);border-bottom:1px solid var(--bdr);display:flex;align-items:center;position:relative;z-index:20;flex-shrink:0}
+.logo-badge{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--blue);color:#fff;font-family:system-ui,'Segoe UI',sans-serif;font-size:15px;font-weight:700;flex-shrink:0;margin-right:10px}
+.topnav{display:flex;align-items:stretch;height:100%;padding:0 6px}
+.tnav{padding:0 15px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s;white-space:nowrap}
+.tnav:hover{color:var(--txt)}.tnav.on{color:var(--blue);border-bottom-color:var(--blue)}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--bdr2)}.tnav.on .tdot{background:var(--blue)}
+
+/* SHELL */
+#shell{flex:1;display:flex;overflow:hidden;position:relative;z-index:5}
+
+/* SIDEBAR */
+#sidebar{width:174px;background:var(--sur);border-right:1px solid var(--bdr);flex-shrink:0;padding:12px 0;overflow-y:auto}
+.sb-lbl{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:6px 12px 3px;display:block}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:1px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--muted);transition:all .15s;user-select:none}
+.sb-item:hover{color:var(--txt);background:rgba(255,255,255,.04)}
+.sb-item.on{color:var(--blue);background:rgba(29,93,168,.08);border:1px solid rgba(29,93,168,.18)}
+.sb-ic{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;background:rgba(255,255,255,.04);flex-shrink:0}
+.sb-item.on .sb-ic{background:rgba(29,93,168,.15)}
+.sb-div{height:1px;background:var(--bdr);margin:6px 12px}
+
+/* MODULE WRAP */
+#modwrap{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* SUBTABS */
+#stabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--sur);flex-shrink:0}
+.stab{padding:11px 20px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;gap:7px;user-select:none;white-space:nowrap}
+.stab:hover{color:var(--txt)}.stab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.snum{width:17px;height:17px;border-radius:3px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:var(--mono)}
+.stab.on .snum{background:rgba(29,93,168,.18);color:var(--blue)}
+
+/* SUB PAGES */
+#subwrap{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.sp{display:none;flex:1;overflow:hidden}.sp.on{display:flex;flex-direction:column}
+.sp::-webkit-scrollbar{width:4px}.sp::-webkit-scrollbar-thumb{background:var(--bdr2)}
+
+/* CONTENT PAGES */
+.cpg{padding:26px 30px;max-width:860px}
+.shero{border-left:3px solid var(--blue);padding:14px 18px;background:rgba(29,93,168,.04);border-radius:0 7px 7px 0;margin-bottom:20px}
+.shero h1{font-size:19px;font-weight:500;color:var(--txt);margin-bottom:5px}
+.shero p{font-size:12px;color:var(--muted);line-height:1.7}
+.sh2{font-size:14px;font-weight:500;color:var(--txt);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.sh2::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.cc{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:14px 16px;margin-bottom:10px}
+.cc h3{font-size:12px;font-weight:500;color:var(--txt);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.cc p,.cc li{font-size:12px;color:var(--muted);line-height:1.7}
+.cc ul{padding-left:16px;margin-top:5px}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ib{background:rgba(181,117,10,.06);border-left:2px solid var(--amber);padding:9px 12px;border-radius:0 5px 5px 0;font-size:11px;color:#fcd34d;line-height:1.6;margin:10px 0}
+.kb{background:rgba(30,138,82,.05);border:1px solid rgba(30,138,82,.2);border-radius:6px;padding:10px 13px;font-size:11px;color:#6ee7b7;line-height:1.6;margin:10px 0}
+.tag{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:var(--mono)}
+.tb{background:rgba(29,93,168,.12);color:var(--blue)}.tp{background:rgba(109,77,199,.12);color:var(--purple)}
+.tg{background:rgba(30,138,82,.12);color:var(--green)}.ta{background:rgba(181,117,10,.12);color:var(--amber)}
+
+/* FORMULA PAGE */
+.fb{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:14px 16px;margin-bottom:12px}
+.flbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.feq{background:#040810;border-radius:5px;padding:12px 16px;font-family:var(--mono);font-size:13px;color:var(--txt);overflow-x:auto;line-height:2;margin:6px 0}
+.feq .s{color:var(--blue)}.feq .p{color:var(--purple)}.feq .g{color:var(--green)}.feq .a{color:var(--amber)}
+.fdsc{font-size:11px;color:var(--muted);line-height:1.7;margin-top:7px}
+.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}
+.vi{background:rgba(29,93,168,.04);border:1px solid var(--bdr);border-radius:5px;padding:7px 9px}
+.vs{font-family:var(--mono);font-size:11px;color:var(--blue);margin-bottom:2px}
+.vd{font-size:10px;color:var(--muted);line-height:1.4}
+
+/* DESIGN & SIM PAGE */
+#dsp{display:none;flex-direction:column;overflow:hidden;flex:1;min-height:0}
+#dsp.on{display:flex}
+
+/* Design params block */
+#dpblk{flex-shrink:0;border-bottom:1px solid var(--bdr)}
+#dphdr{padding:9px 18px;background:var(--sur);display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none}
+#dphdr h3{font-size:12px;font-weight:500;color:var(--txt)}
+#dphdr .hint{font-size:10px;color:var(--muted);margin-left:4px}
+#dpArr{margin-left:auto;font-size:11px;color:var(--muted);transition:transform .2s}
+#dpbdy{padding:14px 18px}
+#dpgrid{display:grid;gap:11px}
+.dpf label{display:block;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.dprow{display:flex;align-items:stretch;background:var(--sur);border:1px solid var(--bdr);border-radius:6px;overflow:hidden;transition:border-color .15s}
+.dprow:focus-within{border-color:var(--blue)}
+.dprow input{flex:1;padding:7px 9px;background:transparent;border:none;color:var(--txt);font-family:var(--mono);font-size:13px;outline:none;min-width:0}
+.dpu{padding:0 9px;background:rgba(29,93,168,.06);border-left:1px solid var(--bdr);font-family:var(--mono);font-size:9px;color:var(--blue);white-space:nowrap;display:flex;align-items:center}
+.dph{font-size:9px;color:var(--dim);margin-top:3px}
+#dplive{display:grid;gap:7px;margin-top:12px}
+.lvc{background:var(--sur);border:1px solid var(--bdr);border-radius:6px;padding:7px 9px}
+.lvc.hi{border-color:rgba(29,93,168,.3);background:rgba(29,93,168,.04)}
+.lvl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.lvv{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--blue);margin-top:2px}
+.lvu{font-size:8px;color:var(--muted)}
+
+/* Sim block */
+#simblk{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#simbar{padding:9px 18px;background:var(--sur);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap}
+#simbar h3{font-size:12px;font-weight:500;color:var(--txt)}
+.fg{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.fg input{width:68px;padding:5px 7px;background:var(--sur);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);font-family:var(--mono);font-size:11px;outline:none}
+.fg input:focus{border-color:var(--blue)}
+.sbtns{display:flex;gap:7px;margin-left:auto}
+.sbtn{padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:500;display:flex;align-items:center;gap:5px;transition:opacity .15s;font-family:inherit}
+.sbtn-s{background:var(--blue);color:#03111c}.sbtn-f{background:var(--purple);color:#0a0316}
+.sbtn:hover{opacity:.85}
+
+/* Sim body */
+#simbdy{flex:1;position:relative;overflow:hidden}
+#idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;color:var(--muted)}
+#idle .ic{font-size:32px;opacity:.2}
+
+/* Result panels */
+.rp{position:absolute;inset:0;display:none;flex-direction:column;background:var(--card);z-index:5}
+.rp.on{display:flex}
+.rphdr{padding:9px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:9px;flex-shrink:0;background:var(--sur)}
+.rptit{font-size:12px;font-weight:500;color:var(--txt)}
+.rpsub{font-size:10px;color:var(--muted);margin-left:4px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rpx{padding:3px 10px;background:rgba(255,255,255,.04);border:1px solid var(--bdr);border-radius:4px;cursor:pointer;font-size:10px;color:var(--muted)}
+.rpx:hover{color:var(--txt)}
+
+/* S-param panel */
+#rp-sp .rpbdy{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 16px;flex:1;min-height:0;overflow-y:auto}
+#rp-sp .rpbdy::-webkit-scrollbar{width:4px}.rpbdy::-webkit-scrollbar-thumb{background:var(--bdr2)}
+.rcc{background:var(--sur);border:1px solid var(--bdr);border-radius:7px;padding:11px 13px}
+.rcc canvas{max-height:230px!important}
+.rcc h4{font-size:10px;color:var(--muted);margin-bottom:7px;font-family:var(--mono)}
+.stats{grid-column:span 2;display:grid;gap:7px}
+.st{background:var(--card);border:1px solid var(--bdr);border-radius:6px;padding:7px 9px}
+.stl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stv{font-family:var(--mono);font-size:14px;color:var(--blue);margin-top:1px}
+.stu{font-size:8px;color:var(--muted)}
+.stv.p{color:var(--purple)}.stv.g{color:var(--green)}.stv.a{color:var(--amber)}.stv.r{color:var(--red)}
+
+/* Field panel */
+#rp-fd{flex-direction:column}
+#fdwrap{flex:1;background:var(--sur);position:relative;overflow:hidden}
+#fdcvs{display:block;width:100%;height:100%}
+#fdlegend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;background:var(--sur);border:1px solid var(--bdr);border-radius:6px;padding:7px 12px;margin-top:8px;font-size:10px;font-family:var(--mono);color:var(--muted)}
+.fll{display:flex;align-items:center;gap:6px;margin:0}
+.flc{width:18px;height:2px;border-radius:1px;flex-shrink:0}
+#fdsbar{padding:12px 22px;background:var(--sur);border-top:1px solid var(--bdr);display:flex;align-items:center;gap:14px;flex-shrink:0}
+#fdfreq{font-family:var(--mono);font-size:13px;color:var(--blue);min-width:88px}
+#fdrng{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--blue));cursor:pointer;outline:none}
+#fdrng::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--blue);cursor:pointer}
+#fdinfo{font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+/* Smith svg */
+#smithsvg{background:#ffffff;border:1px solid var(--bdr);border-radius:7px;display:block;width:100%}
+</style>
+
+<style>
+/* ════════════════════════════════════════════════════════════
+   OVERRIDES — light academic theme, larger type, scroll fixes
+════════════════════════════════════════════════════════════ */
+
+/* ── Warm paper palette (replaces neon dark) ── */
+:root{
+  --bg:#eef2f7;  --sur:#f6f8fb;  --card:#ffffff;
+  --bdr:#dde3ec; --bdr2:#c7d0de;
+  --blue:#1d5da8; --purple:#6d4dc7; --amber:#b5750a;
+  --green:#1e8a52; --red:#c23b3b;
+  --txt:#1c2536; --muted:#63708a; --dim:#8996ac;
+  --mono:'Consolas','Courier New',monospace;
+}
+body{background:var(--bg);font-size:15px;
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+body::after{display:none}   /* remove the sci-fi grid overlay */
+
+/* ── SCROLL FIX ─────────────────────────────────────────────
+   Concept/Formula/Design tabs all scroll; design page grows
+   naturally; sim result area keeps a fixed working height. */
+.sp{display:none;flex:1;overflow-y:auto}
+.sp.on{display:flex;flex-direction:column}
+#dsp{display:none;flex-direction:column;flex:none;min-height:0;overflow:visible}
+#dsp.on{display:flex}
+#simblk{flex:none;display:flex;flex-direction:column;overflow:visible}
+#simbdy{flex:none;position:relative;min-height:600px;overflow:hidden}
+#dpblk{flex-shrink:0}
+
+/* ── Top bar / nav ── */
+#topbar{background:var(--card);border-bottom:2px solid var(--bdr)}
+.tnav{font-size:13.5px;color:var(--muted)}
+.tnav.on{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* ── Sidebar ── */
+.sb-lbl{font-size:10px}
+.sb-item{font-size:13px;padding:9px 11px}
+.sb-item.on{background:rgba(29,93,138,.08);border-color:rgba(29,93,138,.25)}
+.sb-ic{background:rgba(0,0,0,.04)}
+.sb-item.on .sb-ic{background:rgba(29,93,138,.12)}
+
+/* ── Sub-tabs ── */
+.stab{font-size:13.5px;padding:12px 22px}
+.snum{font-size:10px;background:rgba(0,0,0,.05)}
+.stab.on .snum{background:rgba(29,93,138,.15);color:var(--blue)}
+
+/* ── Content pages: academic serif headings, bigger body ── */
+.cpg{max-width:920px;padding:30px 36px;margin:0 auto;width:100%}
+.shero{background:rgba(29,93,138,.05);border-left-color:var(--blue)}
+.shero h1{font-family:Georgia,'Times New Roman',serif;font-size:25px;font-weight:600}
+.shero p{font-size:14px;line-height:1.75}
+.sh2{font-family:Georgia,serif;font-size:17.5px;margin:26px 0 12px}
+.cc{padding:16px 19px}
+.cc h3{font-size:14.5px}
+.cc p,.cc li{font-size:13.5px;line-height:1.75}
+.ib{font-size:13px;color:#8a5a08;background:rgba(163,105,10,.07)}
+.kb{font-size:13px;color:#155e36;background:rgba(30,122,70,.07);border-color:rgba(30,122,70,.25)}
+.tag{font-size:10px}
+.tb{background:rgba(29,93,138,.1)}
+.tp{background:rgba(109,65,133,.1)}
+.tg{background:rgba(30,122,70,.1)}
+.ta{background:rgba(163,105,10,.1)}
+
+/* ── Formula boxes: light background so navy symbols read well ── */
+.fb{padding:16px 19px}
+.flbl{font-size:11px}
+.feq{background:#f2efe6;border:1px solid var(--bdr);color:var(--txt);
+     font-size:14.5px;line-height:2.1;padding:14px 18px}
+.fdsc{font-size:13px;line-height:1.75}
+.vi{background:rgba(29,93,138,.05)}
+.vs{font-size:12.5px}
+.vd{font-size:11px}
+
+/* ── Design parameters: larger inputs and labels ── */
+#dphdr h3{font-size:13.5px}
+#dphdr .hint{font-size:11px}
+.dpf label{font-size:10.5px}
+.dprow input{font-size:14.5px;padding:8px 10px}
+.dpu{font-size:10.5px;background:rgba(29,93,138,.07)}
+.dph{font-size:10.5px;color:var(--dim)}
+
+/* ── Live result cards ── */
+.lvl{font-size:9.5px}
+.lvv{font-size:15.5px}
+.lvu{font-size:9.5px}
+.lvc.hi{border-color:rgba(29,93,138,.4);background:rgba(29,93,138,.05)}
+
+/* ── Simulation bar ── */
+#simbar h3{font-size:13.5px}
+.fg{font-size:12px}
+.fg input{font-size:12.5px}
+.sbtn{font-size:12.5px;padding:8px 18px}
+.sbtn-s{background:var(--blue);color:#ffffff}
+.sbtn-f{background:var(--purple);color:#ffffff}
+
+/* ── Result panels ── */
+.rptit{font-size:13.5px}
+.rpsub{font-size:11px}
+.rpx{font-size:11.5px}
+.rcc h4{font-size:12px;color:var(--muted)}
+.stl{font-size:9.5px}
+.stv{font-size:16px}
+.stu{font-size:9.5px}
+
+/* ── Field slider bar ── */
+#fdfreq{font-size:14.5px}
+#fdinfo{font-size:11.5px}
+#fdlegend{font-size:10px}
+
+/* ── Tables in concept pages ── */
+.cc table td,.cc table th{font-size:12.5px!important}
+
+/* ── Scrollbars: subtle on light ── */
+::-webkit-scrollbar{width:9px}
+::-webkit-scrollbar-thumb{background:#c9c2b0;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#b3ab96}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ── #idle ── */
+#idle p{font-size:13.5px}
+.chart-fallback{font-size:10.5px;color:var(--muted);text-align:center;padding:14px 8px;border:1px dashed var(--bdr);border-radius:6px;margin-top:8px}
+
+/* ════════════════════════════════════════════════════════════
+   NEW TOPBAR — hamburger + logo + title + right nav (image match)
+════════════════════════════════════════════════════════════ */
+#topbar{height:54px;padding:0 18px 0 16px;gap:0}
+#hamburger{width:46px;height:54px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:17px;flex-shrink:0;border-right:none}
+#hamburger:hover{color:var(--txt)}
+#topTitle{font-family:'Segoe UI',system-ui,sans-serif;font-weight:700;font-size:17px;color:#164a87;white-space:nowrap;margin-right:auto}
+.topnav2{display:flex;align-items:center;height:100%;gap:26px}
+.tnav2{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:500;color:var(--muted);cursor:pointer;padding:0 2px;height:100%;border-bottom:2px solid transparent}
+.tnav2:hover{color:var(--txt)}
+.tnav2.on{color:var(--blue);border-bottom-color:var(--blue)}
+
+/* Sidebar hidden by default to match reference image; hamburger toggles it */
+#sidebar{display:none;position:absolute;top:54px;left:0;bottom:0;z-index:30;box-shadow:2px 0 14px rgba(0,0,0,.12)}
+#sidebar.open{display:block}
+#shell{position:relative}
+
+/* ════════════════════════════════════════════════════════════
+   DESIGN & SIMULATION — 3-panel top row + 5-panel results row
+════════════════════════════════════════════════════════════ */
+#dsp{padding:14px;gap:14px;overflow-y:auto;background:var(--bg)}
+#dsTop{display:grid;grid-template-columns:300px 1fr 300px;gap:14px;align-items:stretch}
+.dpanel{background:var(--card);border:1px solid var(--bdr);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.dpanel-hdr{padding:12px 16px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.pnum{width:20px;height:20px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dpanel-hdr h3{font-size:13.5px;font-weight:600;color:var(--txt)}
+.dpanel-tools{margin-left:auto;display:flex;gap:6px}
+.dtool{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--sur);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);cursor:pointer}
+.dtool:hover{color:var(--txt);border-color:var(--bdr2)}
+.dtool.dtool-dim{width:auto;padding:0 8px;gap:5px;font-size:9.5px;font-weight:600;letter-spacing:.03em;font-family:var(--mono)}
+.dtool.on{color:var(--blue);border-color:rgba(29,93,168,.4);background:rgba(29,93,168,.09)}
+
+/* Panel 1: params */
+#panel-params .dpanel-bdy{padding:14px 16px;overflow-y:auto;flex:1}
+#dpgrid{display:grid;grid-template-columns:1fr;gap:8px}
+.dpf{display:flex;align-items:center;gap:10px}
+.dpf label{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--txt);text-transform:none;letter-spacing:0;margin-bottom:0;flex:1;min-width:0;line-height:1.25}
+.dpf .infoic{width:13px;height:13px;border-radius:50%;border:1px solid var(--muted);color:var(--muted);font-size:8.5px;display:inline-flex;align-items:center;justify-content:center;cursor:help;flex-shrink:0}
+.dpf .dprow{flex:0 0 118px;width:118px}
+.dph{display:none}
+#runbtnRow{display:flex;gap:8px;margin-top:14px}
+#runSimBtn{flex:1;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+#runSimBtn:hover{opacity:.9}
+#resetBtn{width:40px;border:1px solid var(--bdr);background:var(--sur);border-radius:7px;cursor:pointer;font-size:14px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+#resetBtn:hover{color:var(--txt)}
+#simStatus{display:none;margin-top:10px;font-size:11.5px;color:var(--green);align-items:center;gap:6px}
+#simStatus .ts{color:var(--muted);margin-left:auto;font-family:var(--mono);font-size:10.5px}
+#simStatus.show{display:flex}
+
+/* Panel 3 mirrors Panel 1's rendered height (set via JS syncPanelHeights()) */
+#dsTop{align-items:start}
+#panel-live{overflow:hidden}
+
+
+/* Panel 2: geometry */
+#panel-geo .dpanel-bdy{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;overflow:hidden;position:relative}
+#filt-geo-svg{width:100%}
+.geo-legend{display:flex;gap:18px;padding:9px 16px;border-top:1px solid var(--bdr);font-size:11px;color:var(--muted);flex-shrink:0}
+.geo-legend .lg{display:flex;align-items:center;gap:6px}
+.geo-legend .sw{width:14px;height:10px;border-radius:2px;display:inline-block}
+#panel-geo:fullscreen{background:var(--card)}
+#panel-geo:fullscreen .dpanel-bdy{padding:30px}
+
+/* Panel 3: live values list */
+#panel-live .dpanel-bdy{padding:8px 12px;overflow-y:auto;flex:1}
+#dplive{display:flex;flex-direction:column;gap:6px}
+.lvrow{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:6px;background:var(--sur)}
+.lvrow.hi{background:rgba(29,93,168,.06)}
+.lvic{width:24px;height:24px;border-radius:6px;background:rgba(29,93,168,.12);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.lvrow-lbl{font-size:11.5px;color:var(--muted);flex:1}
+.lvrow-val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--blue);white-space:nowrap}
+.lvrow-val.p{color:var(--purple)}.lvrow-val.g{color:var(--green)}.lvrow-val.a{color:var(--amber)}.lvrow-val.r{color:var(--red)}
+
+/* Bottom results: row1 = panels 4,5,6 side by side; row2 = panels 7,8 side by side */
+#dsBottom{display:flex;flex-direction:column;gap:14px;min-height:0}
+.row-top2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.row-top3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.row-bot2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.row-bot3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.rpanel{background:var(--card);border:1px solid var(--bdr);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.row-top2 .rpanel,.row-top3 .rpanel{min-height:300px}
+.row-bot2 .rpanel,.row-bot3 .rpanel{min-height:340px}
+.rpanel .dpanel-hdr h3{font-size:12.5px}
+.rpanel-bdy{flex:1;padding:12px 14px;display:flex;flex-direction:column;min-height:0;position:relative}
+.idle-ov{position:absolute;inset:12px 14px;background:var(--sur);border:1px solid var(--bdr);border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;z-index:6}
+.idle-ov svg{opacity:.55;color:var(--muted)}
+.idle-ov .idle-t{font-size:12px;color:var(--muted);font-family:var(--mono);max-width:220px;line-height:1.5}
+.idle-ov .idle-b{margin-top:2px;background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer}
+.idle-ov .idle-b:hover{opacity:.9}
+.idle-ov.hide{display:none}
+#idle-field{inset:0;border-radius:10px}
+.rpanel-bdy canvas{max-height:230px}
+.rp-legend{display:flex;gap:14px;justify-content:center;margin-top:0;font-size:11px;color:var(--muted)}
+.chart-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px}
+.center-chip{background:var(--sur);border:1px solid var(--bdr);border-radius:5px;padding:3px 10px;font-size:10.5px;font-family:var(--mono);color:var(--muted);white-space:nowrap;margin-left:auto}
+.smith-row{display:flex;gap:12px;align-items:flex-start}
+.smith-row svg{flex:1;min-width:0;max-width:280px}
+.smith-legend{width:130px;flex-shrink:0;background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:10px}
+.smith-legend .sm-row{display:flex;align-items:center;gap:7px;margin:7px 0;font-size:11px;color:var(--txt)}
+.smith-legend .sm-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.smith-legend .sm-lbl{font-family:var(--mono);font-size:10.5px}
+.smith-legend .sm-z0{margin-top:8px;padding-top:8px;border-top:1px solid var(--bdr);font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center}
+@media (max-width:640px){ .smith-row{flex-direction:column} .smith-legend{width:100%} }
+.rp-legend .lg{display:flex;align-items:center;gap:5px}
+.rp-legend .ln{width:16px;height:2px;display:inline-block}
+#dsFooter{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:7px;padding:10px 4px 0}
+
+/* Smith chart panel */
+#panel-smith .rpanel-bdy{align-items:center;justify-content:center}
+
+/* Equivalent circuit panel */
+#equiv-subtitle{padding:0 16px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+#equiv-subtitle .eq-desc{font-size:11px;color:var(--muted);margin-right:2px}
+#equiv-subtitle .chip{background:var(--sur);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px;font-family:var(--mono);font-size:10.5px;color:var(--blue);white-space:nowrap}
+#equiv-subtitle .chip.g{color:var(--purple)}
+.equiv-vals-box{margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bdr);border:1px solid var(--bdr);border-radius:7px;overflow:hidden}
+@media (max-width:420px){ .equiv-vals-box{grid-template-columns:repeat(2,1fr)} }
+.equiv-vals-box .ev{background:var(--sur);padding:7px 10px;display:flex;flex-direction:column;gap:2px}
+.equiv-vals-box .ev-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-family:var(--mono)}
+.equiv-vals-box .ev-v{font-size:12.5px;color:var(--txt);font-weight:700;font-family:var(--mono)}
+
+/* Field distribution panel */
+#panel-field .rpanel-bdy{padding:0}
+#panel-field .dpanel-hdr{position:relative}
+#fdModeSel{margin-left:auto;font-size:10.5px;background:var(--sur);border:1px solid var(--bdr);border-radius:5px;color:var(--txt);padding:3px 6px}
+#fdwrap{flex:1;position:relative;min-height:180px;background:#ffffff}
+#fdcvs{display:block;width:100%;height:100%}
+.fd-minmax{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:10px;color:var(--muted);font-family:var(--mono)}
+.fd-gradbar{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,rgba(29,93,168,.08),rgba(29,93,168,.95));transition:background .2s}
+#fdsbar{padding:9px 14px;border-top:1px solid var(--bdr);display:flex;align-items:center;gap:10px}
+#fdfreq{font-family:var(--mono);font-size:11px;color:var(--blue);white-space:nowrap}
+#fdrng{flex:1}
+#fdPlayBtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--blue);color:#fff;cursor:pointer;font-size:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#fdStepBtn{width:26px;height:26px;border-radius:6px;border:1px solid var(--bdr);background:var(--sur);color:var(--muted);cursor:pointer;font-size:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#fdinfo,#fd-sub{display:none}
+</style>
+
 </head>
 <body>
-		<!-- Your code goes here-->
 
-	<!-- Add JS at the bottom of HTML file --> 
-        <script src="./js/main.js"></script>
+<div id="topbar">
+  <div class="logo-badge">μW</div>
+  <div id="topTitle">Microwave Virtual Lab</div>
+  <div class="topnav2">
+    <div class="tnav2" id="st-concept" onclick="switchTab('concept')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Concept</div>
+    <div class="tnav2" id="st-formula" onclick="switchTab('formula')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> Formula</div>
+    <div class="tnav2 on" id="st-design" onclick="switchTab('design')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9 6 13 18 15 12 22 12"/></svg> Design &amp; Simulation</div>
+    <div class="tnav2" id="st-why50" onclick="switchTab('why50')"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3"/><line x1="12" y1="15.2" x2="12" y2="15.3"/></svg> Why 50 Ω?</div>
+  </div>
+</div>
+
+<div id="shell">
+<div id="modwrap">
+  <div id="subwrap">
+
+    <!-- CONCEPT TAB -->
+    <div class="sp on" id="tab-concept">
+      <div class="cpg" id="concept-body"></div>
+    </div>
+
+    <!-- FORMULA TAB -->
+    <div class="sp" id="tab-formula">
+      <div class="cpg" id="formula-body"></div>
+    </div>
+
+    <!-- WHY 50 OHM TAB — theory + formula combined on a single page -->
+    <div class="sp" id="tab-why50">
+      <div class="cpg" id="why50-body"></div>
+    </div>
+
+    <!-- DESIGN & SIM TAB -->
+    <div class="sp" id="tab-design">
+      <div id="dsp" class="on">
+
+        <!-- TOP ROW: 3 panels -->
+        <div id="dsTop">
+          <!-- PANEL 1: DESIGN PARAMETERS -->
+          <div class="dpanel" id="panel-params">
+            <div class="dpanel-hdr"><span class="pnum">1</span><h3>Design Parameters</h3></div>
+            <div class="dpanel-bdy">
+              <input type="hidden" id="fs1" value="1.8">
+              <input type="hidden" id="fs2" value="3.0">
+              <input type="hidden" id="fpts" value="201">
+              <div id="dpgrid"></div>
+              <div id="dpwarn" class="ib" style="display:none;margin:10px 0 0"></div>
+              <div id="runbtnRow">
+                <button id="runSimBtn" onclick="runSimulation()"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg> Run Simulation</button>
+                <button id="resetBtn" onclick="resetDesign()" title="Reset to defaults"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></button>
+              </div>
+              <div id="simStatus"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Simulation Completed Successfully <span class="ts" id="simTs"></span></div>
+            </div>
+          </div>
+
+          <!-- PANEL 2: LIVE GEOMETRY VIEW -->
+          <div class="dpanel" id="panel-geo">
+            <div class="dpanel-hdr">
+              <span class="pnum">2</span><h3>Live Geometry View</h3>
+              <div class="dpanel-tools">
+                <div class="dtool dtool-dim" id="dimToggle" title="Toggle dimension annotations" onclick="toggleFiltDims()"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/></svg> DIMS</div>
+              </div>
+            </div>
+            <div class="dpanel-bdy"><div id="filt-geo-svg" style="width:100%"></div></div>
+            <div class="geo-legend">
+              <div class="lg"><span class="sw" style="background:linear-gradient(135deg,#f4c493,#c9782f 55%,#7a4218)"></span>Copper (Microstrip)</div>
+              <div class="lg"><span class="sw" style="background:linear-gradient(135deg,#173822,#0a1e13)"></span>Substrate (FR4)</div>
+            </div>
+          </div>
+
+          <!-- PANEL 3: LIVE DESIGN VALUES -->
+          <div class="dpanel" id="panel-live">
+            <div class="dpanel-hdr"><span class="pnum">3</span><h3>Live Design Values</h3></div>
+            <div class="dpanel-bdy"><div id="dplive"></div></div>
+          </div>
+        </div>
+
+        <!-- BOTTOM ROW: 5 result panels -->
+        <div id="dsBottom">
+          <div class="row-top3">
+            <div class="rpanel" id="panel-sparam">
+              <div class="dpanel-hdr"><span class="pnum">4</span><h3>S-Parameters (Magnitude)</h3></div>
+              <div class="rpanel-bdy">
+                <div id="sp-sub" style="display:none"></div>
+                <div id="sp-stats" style="display:none"></div>
+                <canvas id="ch-s11"></canvas>
+                <div class="chart-footer"><div class="rp-legend"><span class="lg"><span class="ln" style="background:#1d5da8"></span>|S21|</span><span class="lg"><span class="ln" style="background:#c23b3b"></span>|S11|</span></div><div class="center-chip" id="sp-center"></div></div>
+                <div class="idle-ov" id="idle-sparam"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 7 12 9 6 13 18 15 12 22 12"/></svg><div class="idle-t">Run Simulation to see the S-parameter response</div><button class="idle-b" onclick="runSimulation()">Run Simulation</button></div>
+              </div>
+            </div>
+
+            <div class="rpanel" id="panel-vswr">
+              <div class="dpanel-hdr"><span class="pnum">5</span><h3 id="h4-vswr">VSWR</h3></div>
+              <div class="rpanel-bdy"><canvas id="ch-vswr"></canvas>
+                <div class="chart-footer"><div></div><div class="center-chip" id="vswr-center"></div></div>
+                <div class="idle-ov" id="idle-vswr"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-6 4 4 4-8"/></svg><div class="idle-t">Run Simulation to see the VSWR curve</div><button class="idle-b" onclick="runSimulation()">Run Simulation</button></div>
+              </div>
+            </div>
+
+            <div class="rpanel" id="panel-smith">
+              <div class="dpanel-hdr"><span class="pnum">6</span><h3>Smith Chart</h3></div>
+              <div class="rpanel-bdy">
+                <div class="smith-row">
+                  <svg id="smithsvg" viewBox="0 0 300 300"></svg>
+                  <div id="smithLegend" class="smith-legend"></div>
+                </div>
+                <div class="idle-ov" id="idle-smith"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/></svg><div class="idle-t">Run Simulation to see the Smith chart locus</div><button class="idle-b" onclick="runSimulation()">Run Simulation</button></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-bot2">
+            <div class="rpanel" id="panel-equiv">
+              <div class="dpanel-hdr"><span class="pnum">7</span><h3 id="equiv-title">Equivalent Circuit</h3></div>
+              <div id="equiv-subtitle"></div>
+              <div class="rpanel-bdy">
+                <svg id="equiv-svg" viewBox="0 0 700 165" style="width:100%;height:165px;background:#ffffff;border:1px solid var(--bdr);border-radius:6px;display:block"></svg>
+                <div id="equiv-vals" class="equiv-vals-box"></div>
+                <div class="idle-ov" id="idle-equiv"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg><div class="idle-t">Run Simulation to see the equivalent circuit values</div><button class="idle-b" onclick="runSimulation()">Run Simulation</button></div>
+              </div>
+            </div>
+
+            <div class="rpanel" id="panel-field">
+              <div class="dpanel-hdr">
+                <span class="pnum">8</span><h3>Field Distribution</h3>
+                <select id="fdModeSel" onchange="setFiltFieldMode(this.value)"><option value="E">Electric Field (E)</option><option value="H">Magnetic Field (H)</option></select>
+              </div>
+              <div class="rpanel-bdy">
+                <div id="fdwrap">
+                  <div id="fdcvs"></div>
+                </div>
+                <div id="fdlegend"></div>
+                <div class="fd-minmax" id="fdMinMax">Low energy <span class="fd-gradbar" id="fdGradbar"></span> High energy (at resonance)</div>
+                <div id="fdsbar">
+                  <div id="fdfreq">Frequency: 2.400 GHz</div>
+                  <input type="range" id="fdrng" min="0" max="100" value="50">
+                  <div id="fd-sub"></div>
+                  <div id="fdinfo"></div>
+                  <button id="fdPlayBtn" onclick="toggleFdPlay()"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg></button>
+                  <button id="fdStepBtn" onclick="fdStep()"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="none"><polygon points="5 4 15 12 5 20 5 4"/><rect x="17" y="4" width="2.5" height="16"/></svg></button>
+                </div>
+                <div class="idle-ov" id="idle-field"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg><div class="idle-t">Run Simulation to see the field distribution</div><button class="idle-b" onclick="runSimulation()">Run Simulation</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dsFooter">ℹ️ This simulator uses analytical and circuit-level models for educational purposes. It is not a full-wave EM simulator.</div>
+
+      </div><!-- dsp -->
+    </div><!-- tab-design -->
+
+  </div><!-- subwrap -->
+</div><!-- modwrap -->
+</div><!-- shell -->
+
+<script>
+/* Small reusable inline-SVG status icons (replace emoji ✓/⚠ used throughout
+   the JS-built status/warning strings, so they render consistently instead
+   of relying on the OS/browser's emoji font). */
+var ICON_CHECK='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+var ICON_WARN='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+/* ═══════════════════════════════════════════════════════
+   PHYSICS
+═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   VERIFIED: εeff, Z0 — Hammerstad & Jensen closed-form microstrip
+   synthesis equations, exactly as in Pozar, "Microwave Engineering"
+   4th ed., Eqs. (3.195)–(3.197). Audited CORRECT — no change made.
+═══════════════════════════════════════════════════════ */
+function msZ0(W, h, er) {
+  var u = W / h;
+  var F = u < 1 ? 1/Math.sqrt(1+12/u) + 0.04*Math.pow(1-u,2) : 1/Math.sqrt(1+12/u); // Pozar eq.3.195
+  var eref = (er+1)/2 + (er-1)/2*F;                                                 // Pozar eq.3.195
+  var Z0 = u <= 1
+    ? (60/Math.sqrt(eref))*Math.log(8/u + u/4)                                                    // Pozar eq.3.196 (W/h<=1)
+    : (120*Math.PI)/(Math.sqrt(eref)*(u + 1.393 + 0.667*Math.log(u+1.444)));                       // Pozar eq.3.197 (W/h>=1)
+  return {Z0:Z0, eref:eref};
+}
+/* VERIFIED CORRECT: guided wavelength λg = λ0/√εeff = c/(f·√εeff) — Pozar eq.3.183 (standard TEM/quasi-TEM relation). */
+function gLam(fGHz, eref){ return (3e8/(fGHz*1e9*Math.sqrt(eref)))*1e3; }
+function refl(Zr, Zi, Z0){
+  var a=Zr-Z0, b=Zi, c=Zr+Z0, d=Zi, D=c*c+d*d;
+  return {r:(a*c+b*d)/D, i:(b*c-a*d)/D};
+}
+function zinFn(Zr, Zi, Z0, bl){
+  var t=Math.tan(bl), nr=Zr, ni=Zi+Z0*t, dr=Z0-Zi*t, di=Zr*t, D=dr*dr+di*di;
+  return {r:(nr*dr+ni*di)/D*Z0, i:(ni*dr-nr*di)/D*Z0};
+}
+function gv(id){ return parseFloat(document.getElementById(id).value)||0; }
+/* FIX (P1): gv(id)||default silently replaces a legitimate value of 0 (e.g.
+   tanδ=0 for a lossless-dielectric test case) with the default, because 0 is
+   falsy in JS — and does the same for an empty field, with no warning either
+   way. gvOr() only falls back when the field is genuinely empty/unparseable,
+   so an intentionally-entered 0 is respected and reaches the cv() range
+   validator below (which DOES warn/clamp appropriately). */
+function gvOr(id, def){
+  var el = document.getElementById(id);
+  if(!el) return def;
+  var raw = el.value;
+  if(raw === '' || raw === null) return def;
+  var v = parseFloat(raw);
+  return isNaN(v) ? def : v;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART SETUP
+   FIX (P0): Chart.js loads from a CDN (see <script> tag near top of
+   <body>). If that request fails (offline / CDN down / blocked),
+   `Chart` is undefined and the four lines below used to throw a
+   ReferenceError at the TOP LEVEL of this script — which stops the
+   entire file from parsing any further, so every function below
+   (openMod, calcLive, runSimulation, etc.) never gets defined and
+   the whole lab is unusable, not just the chart panels. Now guarded:
+   the rest of the app (parameters, geometry view, live values,
+   equivalent circuit, Smith chart, field view — none of which need
+   Chart.js) still works, and a visible banner tells the user why the
+   4 Chart.js-based panels (S-Parameters/VSWR) are blank, instead of
+   failing silently.
+═══════════════════════════════════════════════════════ */
+var CHART_OK = (typeof Chart !== 'undefined');
+if(CHART_OK){
+  try{
+    Chart.defaults.color = '#63708a';
+    Chart.defaults.borderColor = '#e3dcc9';
+    Chart.defaults.font.family = 'Courier New, monospace';
+    Chart.defaults.font.size = 12;
+  }catch(e){ CHART_OK = false; }
+}
+var CH = {};
+function mkC(id, cfg){
+  var el = document.getElementById(id);
+  if(!CHART_OK){
+    showChartUnavailableBanner();
+    if(el) el.insertAdjacentHTML('afterend','<div class="chart-fallback">Chart library failed to load (offline / CDN blocked) — this panel needs an internet connection.</div>');
+    return;
+  }
+  if(CH[id]) CH[id].destroy();
+  if(el) CH[id] = new Chart(el, cfg);
+}
+function showChartUnavailableBanner(){
+  var b=document.getElementById('chartWarnBanner');
+  if(b){ b.style.display='flex'; return; }
+  b=document.createElement('div');
+  b.id='chartWarnBanner';
+  b.style.cssText='display:flex;align-items:center;gap:8px;background:rgba(194,59,59,.12);border:1px solid rgba(194,59,59,.4);color:#b91c1c;font-size:12px;padding:8px 14px;border-radius:7px;margin:0 0 12px';
+  b.innerHTML=ICON_WARN+' Chart library (Chart.js) could not be loaded — check your internet connection. Design Parameters, Geometry View, Equivalent Circuit, Smith Chart and Live Design Values still work; the S-Parameters/VSWR line charts will stay blank until the page is reloaded with a working connection.';
+  var host=document.getElementById('dsp');
+  if(host) host.insertBefore(b, host.firstChild);
+}
+function cOpts(xt, yt){
+  return {
+    responsive:true, maintainAspectRatio:false, resizeDelay:120,
+    plugins:{legend:{labels:{boxWidth:11}}},
+    scales:{
+      x:{title:{display:true,text:xt,color:'#63708a'},ticks:{maxTicksLimit:8}},
+      y:{title:{display:true,text:yt,color:'#63708a'}}
+    }
+  };
+}
+/* Lightweight in-chart passband shading — no external annotation plugin
+   needed. freqs = the x-axis frequency array (GHz) used to build the chart
+   labels; loF/hiF = passband edges (GHz). Draws a translucent vertical band
+   behind the traces, from the ACTUAL computed -3dB bandwidth around f0. */
+function passbandShadePlugin(freqs, loF, hiF, color){
+  function nearestIdx(target){
+    var bi=0, bd=Infinity;
+    for(var i=0;i<freqs.length;i++){ var d=Math.abs(freqs[i]-target); if(d<bd){bd=d;bi=i;} }
+    return bi;
+  }
+  return {
+    id:'passbandShade'+Math.random().toString(36).slice(2),
+    beforeDatasetsDraw:function(chart){
+      var xScale=chart.scales.x, yScale=chart.scales.y;
+      if(!xScale||!yScale) return;
+      var x1=xScale.getPixelForValue(nearestIdx(loF));
+      var x2=xScale.getPixelForValue(nearestIdx(hiF));
+      var ctx=chart.ctx;
+      ctx.save();
+      ctx.fillStyle=color||'rgba(29,93,168,0.09)';
+      ctx.fillRect(Math.min(x1,x2), yScale.top, Math.abs(x2-x1), yScale.bottom-yScale.top);
+      ctx.restore();
+    }
+  };
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODULE CONTENT
+═══════════════════════════════════════════════════════ */
+var MODS = {
+  
+  why50:{
+    dpFields:[],
+    concept:function(){
+      return '<div class="shero"><h1>Why 50 \u03a9?</h1><p>The 50\u03a9 standard emerged in the 1940s as a compromise between two competing requirements of coaxial transmission lines.</p></div>'
+      + '<div class="sh2">The coaxial line tradeoff</div>'
+      + '<div class="twocol">'
+      + '<div class="cc"><h3>Minimum attenuation <span class="tag tb">77 \u03a9</span></h3><p>For an air-filled coax, conductor loss is minimised when b/a = e = 2.718, giving Z\u2080 = 60\u00b7ln(e) = 60\u03a9 \u2248 77\u03a9 (in air).</p></div>'
+      + '<div class="cc"><h3>Maximum power <span class="tag tg">30 \u03a9</span></h3><p>Power handling is maximised when the electric field at the inner conductor is minimised, giving b/a = e^(1/2) \u2192 Z\u2080 \u2248 30\u03a9.</p></div>'
+      + '</div>'
+      + '<div class="kb">50\u03a9 \u2248 \u221a(30 \u00d7 77) \u2014 geometric mean of the two optima. Adopted by the US military in WW2 and standardised globally.</div>'
+      + '<div class="sh2">Coaxial Z\u2080 formula</div>'
+      + '<div class="cc"><div class="feq" style="font-size:13px">Z\u2080 = (60/\u221a\u03b5<sub>r</sub>) \u00b7 ln(b/a)</div><p style="margin-top:8px;font-size:12px;color:var(--muted)">where a = inner conductor radius, b = outer conductor inner radius, \u03b5_r = dielectric permittivity.</p></div>';
+    },
+    formula:function(){ return '<div class="shero"><h1>Why 50\u03a9 \u2014 Formulas</h1></div><div class="sh2">Coaxial line Z\u2080</div><div class="fb"><div class="feq">Z\u2080 = (60/\u221a\u03b5<sub>r</sub>) \u00b7 ln(b/a)</div><div class="fdsc">Min-loss: b/a = e \u2192 Z\u2080=77\u03a9 (air). Max-power: b/a=\u221ae \u2192 Z\u2080=30\u03a9. Compromise: 50\u03a9.</div></div>'; }
+  },
+
+  // ═══════════════════════════════════════════════════════
+  // RING RESONATOR BANDPASS FILTER MODULE
+  // ═══════════════════════════════════════════════════════
+  filt:{
+    dpFields:[
+      {id:'dp-W',   lbl:'Strip width W',          val:3.0,  unit:'mm',  hint:'50 ohm line',        min:0.1,    max:20},
+      {id:'dp-h',   lbl:'Substrate height h',      val:1.6,  unit:'mm',  hint:'',                   min:0.05,   max:10},
+      {id:'dp-er',  lbl:'Permittivity er',         val:4.4,  unit:'',    hint:'FR4 4.4',            min:1.0001, max:20},
+      {id:'dp-tand',lbl:'Loss tangent',            val:0.02, unit:'',    hint:'',                   min:0,      max:0.1},
+      {id:'dp-f0f', lbl:'Centre frequency f0',     val:2.4,  unit:'GHz', hint:'target frequency',   min:0.05,   max:20},
+      {id:'dp-bw',  lbl:'Bandwidth BW',            val:200,  unit:'MHz', hint:'3dB bandwidth target',min:1,     max:2000},
+      {id:'dp-np',  lbl:'Filter order N',          val:2,    unit:'',    hint:'2 or 3 pole only',   min:2,      max:3, step:1},
+      {id:'dp-rip', lbl:'Ripple Chebyshev',        val:0.5,  unit:'dB',  hint:'0.5 dB typical',     min:0.01,   max:3},
+    ],
+    concept:function(){ return filtConcept(); },
+    formula:function(){ return filtFormula(); }
+  }
+
+};
+
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+var curMod = 'filt';
+var curTab = 'concept';
+var dpOpen = true;
+var fdFmin = 0.5, fdFmax = 6;
+var fdParams = {};
+var filtShowDims = false; // Geometry View: "Show Dimensions" toggle (R, W, g_io, g12 annotations)
+var filtFieldMode = 'E'; // Field Distribution panel: 'E' or 'H' (dropdown was previously wired to nothing)
+
+/* ═══════════════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════════════ */
+function openMod(id){
+  curMod = id;
+  renderMod();
+  switchTab(curTab);
+  closeRP('rp-sp'); closeRP('rp-fd'); showIdle();
+}
+
+function switchTab(tab){
+  curTab = tab;
+  ['concept','formula','design','why50'].forEach(function(t){
+    document.getElementById('st-'+t).classList.toggle('on', t===tab);
+    document.getElementById('tab-'+t).classList.toggle('on', t===tab);
+  });
+  if(tab === 'concept') document.getElementById('concept-body').innerHTML = MODS[curMod].concept();
+  if(tab === 'design') calcLive();
+  if(tab === 'why50') document.getElementById('why50-body').innerHTML = MODS.why50.concept() + MODS.why50.formula();
+}
+
+function toggleDP(){
+  dpOpen = !dpOpen;
+  document.getElementById('dpbdy').style.display = dpOpen ? '' : 'none';
+  document.getElementById('dpArr').textContent = dpOpen ? '▼' : '▶';
+}
+
+/* ═══════════════════════════════════════════════════════
+   RENDER MODULE
+═══════════════════════════════════════════════════════ */
+function renderMod(){
+  var mod = MODS[curMod];
+  document.getElementById('concept-body').innerHTML = mod.concept();
+  document.getElementById('formula-body').innerHTML = mod.formula();
+  var wd0=document.getElementById('dpwarn'); if(wd0){ wd0.style.display='none'; wd0.innerHTML=''; }
+
+  var grid = document.getElementById('dpgrid');
+  var fields = mod.dpFields;
+  var isSelect = function(f){ return f.id === 'dp-np'; }; // filter order -> dropdown, like reference image
+  grid.innerHTML = fields.map(function(f){
+    var minA = f.min!==undefined ? ' min="'+f.min+'"' : '';
+    var maxA = f.max!==undefined ? ' max="'+f.max+'"' : '';
+    var stepA = f.step!==undefined ? f.step : 'any';
+    var titleA = f.hint ? ' title="'+f.hint+'"' : '';
+    var control = isSelect(f)
+      ? '<select id="'+f.id+'" onchange="onParamEdited()" style="flex:1;padding:7px 9px;background:transparent;border:none;color:var(--txt);font-family:var(--mono);font-size:13px;outline:none">'
+        + [2,3].map(function(v){return '<option value="'+v+'"'+(v==f.val?' selected':'')+'>'+v+'</option>';}).join('')
+        + '</select>'
+      : '<input type="number" id="'+f.id+'" value="'+f.val+'" step="'+stepA+'"'+minA+maxA+' oninput="onParamEdited()">';
+    return '<div class="dpf">'
+      + '<label>'+f.lbl+(f.hint?' <span class="infoic"'+titleA+'>i</span>':'')+'</label>'
+      + '<div class="dprow">'
+      + control
+      + '<span class="dpu">'+f.unit+'</span>'
+      + '</div>'
+      + '<div class="dph">'+f.hint+'</div>'
+      + '</div>';
+  }).join('');
+  var runBtn=document.getElementById('runSimBtn'), resetBtn=document.getElementById('resetBtn'), st=document.getElementById('simStatus');
+  if(fields.length === 0){
+    grid.innerHTML = '<div style="font-size:11.5px;color:var(--muted);padding:6px 2px;line-height:1.6">This is a reference page — it has no adjustable design parameters or simulation.</div>';
+    if(runBtn){ runBtn.disabled=true; runBtn.style.opacity='0.45'; runBtn.style.cursor='not-allowed'; }
+    if(resetBtn){ resetBtn.disabled=true; resetBtn.style.opacity='0.45'; resetBtn.style.cursor='not-allowed'; }
+    if(st){ st.classList.remove('show'); }
+  } else {
+    if(runBtn){ runBtn.disabled=false; runBtn.style.opacity=''; runBtn.style.cursor=''; }
+    if(resetBtn){ resetBtn.disabled=false; resetBtn.style.opacity=''; resetBtn.style.cursor=''; }
+  }
+  syncPanelHeights();
+}
+
+/* Panel 3 (Live Design Values) mirrors Panel 1 (Design Parameters)'s natural
+   height, instead of the default CSS Grid "stretch to the tallest of the 3"
+   behaviour — so it tracks Design Parameters specifically, independent of
+   however tall the Geometry View happens to render. */
+function syncPanelHeights(){
+  var pp = document.getElementById('panel-params');
+  var pl = document.getElementById('panel-live');
+  if(!pp || !pl) return;
+  pl.style.height = pp.offsetHeight + 'px';
+}
+window.addEventListener('resize', function(){ syncPanelHeights(); });
+
+/* ═══════════════════════════════════════════════════════
+   GET PARAMS
+═══════════════════════════════════════════════════════ */
+function getP(){
+  if(curMod === 'tline'){
+    return {
+      Z0:gv('dp-Z0')||50, ZLr:gv('dp-ZLr')||75, ZLi:gv('dp-ZLi')||0,
+      len:gv('dp-len')||30, er:gv('dp-er')||3.3
+    };
+  }
+  if(curMod === 'ms'){
+    var r = msZ0(gv('dp-W')||3, gv('dp-h')||1.6, gv('dp-er')||4.4);
+    return {
+      Z0:r.Z0, eref:r.eref, er:r.eref,
+      W:gv('dp-W')||3, h:gv('dp-h')||1.6, erRaw:gv('dp-er')||4.4,
+      len:gv('dp-len')||34.3, tand:gv('dp-tand')||0.02,
+      ZLr:r.Z0, ZLi:0
+    };
+  }
+  if(curMod === 'res'){
+    var W=gv('dp-W')||3, h=gv('dp-h')||1.6, er=gv('dp-er')||4.4;
+    var tand=gv('dp-tand')||0.02, L=gv('dp-L')||34.3;
+    var g=gv('dp-g')||0.3, Wf=gv('dp-Wf')||3, Lf=gv('dp-Lf')||10;
+    var rr = msZ0(W, h, er);
+    var Z0 = rr.Z0, eref = rr.eref;
+    // open-end correction
+    var dL = 0.412*h*(eref+0.3)/(eref-0.258)*(W/h+0.264)/(W/h+0.8);
+    var Leff = L + 2*dL;
+    var f0 = 3e8/(2*Leff*1e-3*Math.sqrt(eref))/1e9;
+    // gap capacitance
+    var eps0 = 8.854e-12;
+    var t_metal = 0.035e-3; // 35um = 1oz copper, in metres
+    // Series gap capacitance (parallel plate: strip end-faces W×t separated by gap g)
+    var Cgap = eps0*(1+er)/2*(W*1e-3)*t_metal/(g*1e-3)*1e15; // fF
+    Cgap = Math.max(0.5, Cgap);
+    // Q_ext: Matthaei/Pozar formula for series-capacitor end-coupled half-wave resonator
+    // Qext = pi / (2 * omega0 * Cg * Z0)
+    var om0 = 2*Math.PI*f0*1e9;
+    var Qe = Math.PI / (2*om0*(Cgap*1e-15)*Z0);
+    Qe = Math.max(5, Qe);
+    // Q_u from conductor + dielectric loss
+    var mu0 = 4e-7*Math.PI;
+    var Rs = Math.sqrt(Math.PI*f0*1e9*mu0/5.8e7);
+    var ac = Rs/(Z0*W*1e-3);
+    var ad = Math.PI*f0*1e9*Math.sqrt(eref)/3e8*tand;
+    var Qu = Math.max(10, Math.PI/((ac+ad)*Leff*1e-3));
+    var rFeed = msZ0(Wf, h, er);
+    return {
+      Z0:Z0, eref:eref, er:eref, erRaw:er, W:W, h:h, tand:tand,
+      L:L, Leff:Leff, dL:dL, f0:f0, g:g, Wf:Wf, Lf:Lf,
+      Cgap:Cgap, Qe:Qe, Qu:Qu, ZLr:Z0, ZLi:0, len:L, Zfeed:rFeed.Z0
+    };
+  }
+  if(curMod === 'ring') return getRingP();
+  if(curMod === 'filt') return getFiltP();
+  return null;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LIVE CARDS
+═══════════════════════════════════════════════════════ */
+var LV_ICONS=['Ω','ε','λ','↻','⟳','∿','⁂','Q','⌘','↔','↔','◎','A','α','∅'];
+function liveCard(lbl, val, unit, hi, col, idx){
+  var cls = 'lvrow' + (hi ? ' hi' : '');
+  var vcls = 'lvrow-val' + (col ? ' '+col : '');
+  var ic = LV_ICONS[idx % LV_ICONS.length];
+  return '<div class="'+cls+'"><div class="lvic">'+ic+'</div><div class="lvrow-lbl">'+lbl+'</div><div class="'+vcls+'">'+val+(unit?' '+unit:'')+'</div></div>';
+}
+
+function calcLive(){
+  var p = getP(); if(!p) return;
+  var items = [];
+  var cols = 6;
+
+  if(curMod === 'tline'){
+    var c = 3e8, lam = c/(((fdFmin+fdFmax)/2)*1e9*Math.sqrt(p.er))*1e3;
+    var bl = 2*Math.PI/lam*p.len*1e-3;
+    var ZI = zinFn(p.ZLr, p.ZLi, p.Z0, bl);
+    var G = refl(p.ZLr, p.ZLi, p.Z0);
+    var gm = Math.sqrt(G.r*G.r+G.i*G.i);
+    var vs = gm < 1 ? (1+gm)/(1-gm) : 9999;
+    items = [
+      {l:'Z\u2080', v:p.Z0.toFixed(0), u:'\u03a9', hi:true},
+      {l:'|\u0393|', v:gm.toFixed(3), col:'p'},
+      {l:'VSWR', v:vs===9999?'\u221e':vs.toFixed(2), col:'a'},
+      {l:'Return Loss', v:(-20*Math.log10(Math.max(gm,1e-12))).toFixed(1), u:'dB'},
+      {l:'Zin real', v:ZI.r.toFixed(2), u:'\u03a9'},
+      {l:'Zin imag', v:ZI.i.toFixed(2), u:'\u03a9'}
+    ];
+  } else if(curMod === 'ms'){
+    var lg = gLam((fdFmin+fdFmax)/2, p.eref);
+    items = [
+      {l:'Z\u2080', v:p.Z0.toFixed(2), u:'\u03a9', hi:true},
+      {l:'\u03b5_r,eff', v:p.eref.toFixed(3), col:'p'},
+      {l:'\u03bb_g', v:lg.toFixed(2), u:'mm'},
+      {l:'\u03bb_g/2', v:(lg/2).toFixed(2), u:'mm'},
+      {l:'v_p', v:(3e8/Math.sqrt(p.eref)/1e6).toFixed(1), u:'Mm/s'},
+      {l:'W/h', v:(p.W/p.h).toFixed(3)}
+    ];
+  } else if(curMod === 'res'){
+    var QL = 1/(1/p.Qu+2/p.Qe);
+    var BW = p.f0/QL*1e3;
+    var IL = 20*Math.log10(Math.max(QL/p.Qe,1e-12));
+    var Leq = p.Z0/(Math.PI*p.f0*1e9)*1e9;
+    var Ceq = 1/(Math.pow(2*Math.PI*p.f0*1e9,2)*(Leq*1e-9))*1e15;
+    cols = 4;
+    items = [
+      {l:'f\u2080 (from L)', v:p.f0.toFixed(4), u:'GHz', hi:true, col:'a'},
+      {l:'Z\u2080 resonator', v:p.Z0.toFixed(2), u:'\u03a9', hi:true},
+      {l:'\u03b5_r,eff', v:p.eref.toFixed(3), col:'p'},
+      {l:'\u0394L (open-end)', v:p.dL.toFixed(3), u:'mm'},
+      {l:'L_eff', v:p.Leff.toFixed(3), u:'mm'},
+      {l:'C_gap', v:p.Cgap.toFixed(2), u:'fF'},
+      {l:'Q_u (unloaded)', v:p.Qu.toFixed(0), col:'g'},
+      {l:'Q_ext (gap)', v:p.Qe.toFixed(0), col:'p'},
+      {l:'Q_L (loaded)', v:QL.toFixed(1), col:'g'},
+      {l:'BW \u22123dB', v:BW.toFixed(2), u:'MHz'},
+      {l:'Ins. loss', v:IL.toFixed(2), u:'dB'},
+      {l:'L_eq', v:Leq.toFixed(3), u:'nH'}
+    ];
+    drawResGeo(p);
+  } else if(curMod === 'filt'){
+    var QLf = 1/(1/p.Qu+1/p.Qe);
+    cols = 5;
+    items = [
+      {l:'f\u2080 (ring)', v:p.f0+'', u:'GHz', hi:true, col:'a'},
+      {l:'Z\u2080', v:p.Z0.toFixed(2), u:'\u03a9'},
+      {l:'\u03b5_r,eff', v:p.eref.toFixed(3), col:'p'},
+      {l:'Ring radius R', v:p.R.toFixed(3), u:'mm', hi:true},
+      {l:'Circumference', v:p.circ.toFixed(2), u:'mm'},
+      {l:'BW \u22123dB', v:p.BW+'', u:'MHz'},
+      {l:'FBW', v:(p.FBW*100).toFixed(2), u:'%'},
+      {l:'Q_ext', v:p.Qe.toFixed(1), col:'p'},
+      {l:'k\u2081\u2082', v:p.k12.toFixed(4), col:'p'},
+      {l:'g_io (I/O gap)', v:p.g_io.toFixed(3), u:'mm'},
+      {l:'g\u2081\u2082 (coupling gap)', v:p.g12.toFixed(3), u:'mm'},
+      {l:'Q_u (unloaded)', v:p.Qu.toFixed(0), col:'g'},
+      {l:'Ins. loss (est.)', v:p.IL_passband.toFixed(2), u:'dB', col:'r'}
+    ];
+    drawFiltGeo(p);
+    var wd=document.getElementById('dpwarn');
+    if(p.warnings && p.warnings.length){
+      wd.style.display='block';
+      wd.innerHTML=ICON_WARN+' '+p.warnings.join(' \u00b7 ');
+    } else {
+      wd.style.display='none'; wd.innerHTML='';
+    }
+  }
+
+  document.getElementById('dplive').innerHTML = items.map(function(it,idx){
+    return liveCard(it.l, it.v, it.u||'', it.hi||false, it.col||'', idx);
+  }).join('');
+  syncPanelHeights(); // panel-params was hidden (display:none) when renderMod() first
+                       // measured it, so that initial sync captured a ~0px height —
+                       // recalculate here now that the tab is actually visible.
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESONATOR GEOMETRY CANVAS
+═══════════════════════════════════════════════════════ */
+function drawResGeo(p){
+  var cvs = document.getElementById('res-geo-cvs');
+  if(!cvs) return;
+  var CW = cvs.parentElement.clientWidth || 700;
+  var CH = 175;
+  cvs.width = CW; cvs.height = CH;
+  var ctx = cvs.getContext('2d');
+  ctx.clearRect(0,0,CW,CH);
+
+  var mX=60, tW=CW-mX*2;
+  var gW=Math.max(5,Math.min(20,(p.g/Math.max(p.L,10))*tW*6));
+  var lfW=Math.max(25,Math.min(90,(p.Lf/Math.max(p.L+2*p.Lf,10))*tW*0.44));
+  var resW=tW-2*lfW-2*gW;
+  var strH=Math.max(9,Math.min(34,p.W*5.5));
+  var feedH=Math.max(7,Math.min(28,p.Wf*5));
+  var cy=CH*0.43, resY=cy-strH/2, feedY=cy-feedH/2;
+  var x0=mX, xg1=x0+lfW, xr0=xg1+gW, xr1=xr0+resW, xg2=xr1, xg2e=xg2+gW, x1=xg2e+lfW;
+
+  // Substrate
+  var sH=strH+40, sY=cy-sH/2-6;
+  ctx.fillStyle='rgba(99,102,241,0.06)'; ctx.fillRect(x0,sY,x1-x0,sH);
+  ctx.strokeStyle='rgba(99,102,241,0.2)'; ctx.lineWidth=0.5;
+  ctx.setLineDash([4,3]); ctx.strokeRect(x0,sY,x1-x0,sH); ctx.setLineDash([]);
+  ctx.fillStyle='rgba(99,102,241,0.45)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+  ctx.fillText('Substrate  \u03b5r='+p.erRaw+'  h='+p.h+'mm  tan\u03b4='+p.tand, (x0+x1)/2, sY+sH+11);
+
+  // Feed lines
+  [[x0,lfW],[xg2e,lfW]].forEach(function(a){
+    ctx.fillStyle='rgba(181,117,10,0.15)'; ctx.fillRect(a[0],feedY,a[1],feedH);
+    ctx.strokeStyle='#b5750a'; ctx.lineWidth=1.2; ctx.strokeRect(a[0],feedY,a[1],feedH);
+  });
+
+  // Coupling gaps + capacitor symbol
+  [xg1,xg2].forEach(function(gx){
+    var gy=Math.min(feedY,resY)-3, gh=Math.max(feedH,strH)+6;
+    ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(gx,gy,gW,gh);
+    ctx.strokeStyle='rgba(194,59,59,0.45)'; ctx.lineWidth=0.5;
+    ctx.setLineDash([2,2]);
+    for(var yy=gy;yy<gy+gh;yy+=4){ctx.beginPath();ctx.moveTo(gx,yy);ctx.lineTo(gx+gW,yy+4);ctx.stroke();}
+    ctx.setLineDash([]);
+    ctx.strokeStyle='#c23b3b'; ctx.lineWidth=1; ctx.strokeRect(gx,gy,gW,gh);
+    // capacitor plates
+    var cgx=(gx+gx+gW)/2, cgy=cy+strH/2+14;
+    ctx.strokeStyle='#c23b3b'; ctx.lineWidth=1.1;
+    ctx.beginPath();ctx.moveTo(gx+1,cgy-4);ctx.lineTo(gx+gW-1,cgy-4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(gx+1,cgy+2);ctx.lineTo(gx+gW-1,cgy+2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cgx,cgy-9);ctx.lineTo(cgx,cgy-4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cgx,cgy+2);ctx.lineTo(cgx,cgy+8);ctx.stroke();
+    ctx.fillStyle='rgba(194,59,59,0.8)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+    ctx.fillText('Cg='+p.Cgap.toFixed(1)+'fF', cgx, cgy+18);
+  });
+
+  // Resonator strip
+  ctx.fillStyle='rgba(29,93,168,0.15)'; ctx.fillRect(xr0,resY,resW,strH);
+  ctx.strokeStyle='#1d5da8'; ctx.lineWidth=1.8; ctx.strokeRect(xr0,resY,resW,strH);
+
+  // Standing wave on resonator
+  ctx.beginPath();
+  for(var i=0;i<=80;i++){
+    var fr=i/80, xp=xr0+fr*resW, amp=Math.sin(Math.PI*fr)*(strH/2-2);
+    i===0 ? ctx.moveTo(xp,cy-amp) : ctx.lineTo(xp,cy-amp);
+  }
+  ctx.strokeStyle='rgba(109,77,199,0.85)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='rgba(109,77,199,0.6)'; ctx.font='7px Courier New'; ctx.textAlign='center';
+  ctx.fillText('|V(z)| at f\u2080', (xr0+xr1)/2, resY-5);
+  ctx.fillText('V_max',xr0+4,resY+strH+10); ctx.fillText('V_max',xr1-4,resY+strH+10);
+  ctx.fillText('I_max',(xr0+xr1)/2,resY+strH+10);
+
+  // Dimension lines
+  var aC='rgba(96,160,200,0.65)';
+  ctx.strokeStyle=aC; ctx.lineWidth=0.6; ctx.fillStyle=aC; ctx.font='8px Courier New';
+  function dim(xa,xb,y,lbl){
+    ctx.beginPath();ctx.moveTo(xa,y);ctx.lineTo(xb,y);ctx.stroke();
+    [xa,xb].forEach(function(xd){ctx.beginPath();ctx.moveTo(xd,y-3);ctx.lineTo(xd,y+3);ctx.stroke();});
+    ctx.textAlign='center'; ctx.fillText(lbl,(xa+xb)/2,y-4);
+  }
+  var aY = sY-12;
+  dim(xr0,xr1,aY,'L='+p.L.toFixed(1)+'mm');
+  dim(x0,xg1,aY-10,'Lf='+p.Lf+'mm'); dim(xg2e,x1,aY-10,'Lf='+p.Lf+'mm');
+  dim(xg1,xg1+gW,aY-10,'g='+p.g+'mm'); dim(xg2,xg2+gW,aY-10,'g='+p.g+'mm');
+  // W
+  var wx=x1+8;
+  ctx.strokeStyle=aC; ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(wx,resY);ctx.lineTo(wx,resY+strH);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(wx-3,resY);ctx.lineTo(wx+3,resY);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(wx-3,resY+strH);ctx.lineTo(wx+3,resY+strH);ctx.stroke();
+  ctx.fillStyle=aC; ctx.textAlign='left'; ctx.fillText('W='+p.W+'mm',wx+5,cy+3);
+
+  // Port labels
+  ctx.fillStyle='rgba(181,117,10,0.9)'; ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+  ctx.fillText('Port 1',x0+lfW/2,sY-2); ctx.fillText('Port 2',xg2e+lfW/2,sY-2);
+
+  // f0 badge
+  ctx.fillStyle='rgba(181,117,10,0.1)';
+  ctx.beginPath(); ctx.roundRect((xr0+xr1)/2-120,CH-22,240,16,3); ctx.fill();
+  ctx.fillStyle='#b5750a'; ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+  ctx.fillText('f\u2080 = '+p.f0.toFixed(4)+' GHz  |  Z\u2080 = '+p.Z0.toFixed(1)+'\u03a9  |  L_eff = '+p.Leff.toFixed(2)+'mm', (xr0+xr1)/2, CH-11);
+}
+
+/* ═══════════════════════════════════════════════════════
+   S-PARAMETER SIMULATION
+═══════════════════════════════════════════════════════ */
+function statCard(lbl,val,unit,col){
+  var vc = 'stv'+(col?' '+col:'');
+  return '<div class="st"><div class="stl">'+lbl+'</div><div class="'+vc+'">'+val+'</div><div class="stu">'+unit+'</div></div>';
+}
+
+/* FIX (P1): the frequency sweep used to be hard-coded to fs1=1.8/fs2=3.0 GHz
+   regardless of what f0 the user set (f0 input allows 0.05-20 GHz) — so any f0
+   outside ~1.8-3.0 GHz swept a window that didn't even contain the resonance,
+   yet still reported "Simulation Completed Successfully". Now the window is
+   centered on the CURRENT f0 and sized relative to BW (with a floor so very
+   narrowband filters still get enough context around the passband, and a cap
+   so very wideband filters don't blow past the sweep). With the default
+   f0=2.4GHz, BW=200MHz this reduces to exactly the old 1.8-3.0GHz window, so
+   the default view is unchanged. */
+function updateFiltSweepRange(p){
+  var BWghz = p.BW/1000;
+  var half = Math.max(BWghz*3, p.f0*0.08);
+  half = Math.min(half, p.f0*0.6);
+  var f1 = Math.max(0.05, p.f0-half);
+  var f2 = Math.min(20, p.f0+half);
+  var e1=document.getElementById('fs1'), e2=document.getElementById('fs2');
+  if(e1) e1.value = f1.toFixed(3);
+  if(e2) e2.value = f2.toFixed(3);
+  return {f1:f1, f2:f2};
+}
+
+function runSparam(){
+  var p = getP(); if(!p) return;
+  if(curMod==='filt') updateFiltSweepRange(p);
+  fdFmin = gv('fs1')||0.5; fdFmax = gv('fs2')||6;
+  var npts = Math.max(51,gv('fpts')||201);
+  var freqs = Array.from({length:npts},function(_,k){return fdFmin+k*(fdFmax-fdFmin)/(npts-1);});
+  var c = 3e8;
+
+  if(curMod === 'ring'){
+    var Qu=p.Qu, Qe=p.Qe, QL=p.QL;
+    var S21=[],S11=[],GD=[];
+    freqs.forEach(function(fi){
+      var d=(fi-p.f0)/p.f0, D=1+(2*QL*d)*(2*QL*d);
+      var s21m=QL/Qe/Math.sqrt(D);
+      var s11r=1-2*QL/Qe/D, s11i=2*QL/Qe*(2*QL*d)/D;
+      S21.push(20*Math.log10(Math.max(s21m,1e-12)));
+      S11.push(20*Math.log10(Math.max(Math.sqrt(s11r*s11r+s11i*s11i),1e-12)));
+      GD.push(-2*QL/p.f0/(1+(2*QL*d)*(2*QL*d))/(2*Math.PI)*1e9);
+    });
+    var IL=20*Math.log10(Math.max(QL/Qe,1e-12));
+    var Leq=p.Leq, Ceq=p.Ceq, Req=p.Z0/Qu;
+    document.getElementById('sp-sub').textContent='f1='+p.f0.toFixed(4)+'GHz | f2='+p.f2.toFixed(3)+'GHz | R='+p.R.toFixed(2)+'mm | g='+p.g+'mm | Qu='+Qu.toFixed(0)+' | Qext='+Qe.toFixed(0)+' | QL='+QL.toFixed(1)+' | BW='+p.BW.toFixed(1)+'MHz';
+    var st='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">';
+    st+=statCard('f₁',p.f0.toFixed(4),'GHz','a')+statCard('Q_u',Qu.toFixed(0),'','g')+statCard('Q_L',QL.toFixed(1),'','g')+statCard('BW -3dB',p.BW.toFixed(1),'MHz','')+statCard('Ins.loss',IL.toFixed(2),'dB','r');
+    st+=statCard('f₂',p.f2.toFixed(3),'GHz','p')+statCard('C_gap',p.Cgap.toFixed(2),'fF','p')+statCard('L_eq',Leq.toFixed(3),'nH','')+statCard('C_eq',Ceq.toFixed(1),'fF','')+statCard('R_eq',Req.toFixed(4),'Ω','');
+    st+='</div>';
+    document.getElementById('sp-stats').innerHTML=st;
+    var cl=cOpts('Frequency (GHz)','dB');
+    cl.scales.y.suggestedMin=-45; cl.scales.y.suggestedMax=5;
+    mkC('ch-s11',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'|S21| dB',data:S21,borderColor:'#1d5da8',borderWidth:2,pointRadius:0,tension:.2,fill:true,backgroundColor:'rgba(29,93,168,.05)'},
+      {label:'|S11| dB',data:S11,borderColor:'#c23b3b',borderWidth:1.5,pointRadius:0,tension:.2,borderDash:[4,3]}
+    ]},options:cl});
+    var _h=document.getElementById('h4-vswr'); if(_h)_h.textContent='Group Delay τ_g (ns)';
+    mkC('ch-vswr',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'Group delay τ_g (ns)',data:GD,borderColor:'#6d4dc7',borderWidth:2,pointRadius:0,tension:.2,fill:true,backgroundColor:'rgba(109,77,199,.05)'}
+    ]},options:cOpts('Frequency (GHz)','τ_g (ns)')});
+    var zArr=Array.from({length:60},function(_,k){return (k/59*p.circ).toFixed(1);});
+    mkC('ch-sw',{type:'line',data:{labels:zArr,datasets:[
+      {label:'|V| along ring (n=1)',data:zArr.map(function(_,k){return Math.abs(Math.sin(Math.PI*k/59));}),borderColor:'#1e8a52',borderWidth:2,pointRadius:0,tension:.3,fill:true,backgroundColor:'rgba(30,138,82,.05)'}
+    ]},options:cOpts('Arc (mm)','|V| norm.')});
+    drawEquivCircuit('res',{Req:Req,Leq:Leq,Ceq:Ceq,Cgap:p.Cgap,f0:p.f0,Qu:Qu,QL:QL});
+    drawSmith([],[0,0],[0,0]);
+    showRP('rp-sp'); return;
+  }
+  if(curMod === 'filt'){
+    // Complex S-parameters from the actual coupled-resonator ABCD network
+    // (same Leq/Ceq/Cio/C12/Qu shown in the Equivalent Circuit panel)
+    var g=p.g, N2=p.N, FBW=p.FBW, f0=p.f0;
+    var netSweep=filtNetworkSweep(p, freqs);
+    var S21=netSweep.map(function(s){return 20*Math.log10(Math.max(cx_abs(s.S21),1e-12));});
+    var S11=netSweep.map(function(s){return 20*Math.log10(Math.max(cx_abs(s.S11),1e-12));});
+    var VSWR=netSweep.map(function(s){
+      var g_=Math.min(cx_abs(s.S11),0.9995);
+      return (1+g_)/(1-g_);
+    });
+    // Cross-check: ideal lossless Chebyshev magnitude (should track the network curve
+    // in-band, confirming the two independent derivations agree)
+    var eps_cheb=Math.sqrt(Math.pow(10,p.rip/10)-1);
+    var S21_cheb=freqs.map(function(fi){
+      var omega=(1/FBW)*(fi/f0-f0/fi);
+      var TN=(Math.abs(omega)<=1)?Math.cos(N2*Math.acos(omega)):Math.cosh(N2*Math.acosh(Math.abs(omega)));
+      return 10*Math.log10(Math.max(1/(1+eps_cheb*eps_cheb*TN*TN),1e-12));
+    });
+    document.getElementById('sp-sub').textContent='f0='+f0+'GHz | BW='+p.BW+'MHz | N='+N2+' | Qe='+p.Qe.toFixed(1)+' | k12='+p.k12.toFixed(4)+' | g_io='+p.g_io.toFixed(2)+'mm | g12='+p.g12.toFixed(2)+'mm';
+    var minIL = Math.max.apply(null, S21); // dB, closest to 0 = min insertion loss at f0
+    var st2='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">';
+    st2+=statCard('f₀',f0+'','GHz','a')+statCard('BW',p.BW+'','MHz','')+statCard('Qe',p.Qe.toFixed(1),'','p')+statCard('k₁₂',p.k12.toFixed(4),'','p')+statCard('IL@f0',(-minIL).toFixed(2),'dB','r');
+    st2+=statCard('g_io',p.g_io.toFixed(3),'mm','')+statCard('g_12',p.g12.toFixed(3),'mm','')+statCard('R',p.R.toFixed(2),'mm','')+statCard('Q_u',p.Qu.toFixed(0),'','g')+statCard('FBW',(p.FBW*100).toFixed(2),'%','');
+    st2+='</div>';
+    document.getElementById('sp-stats').innerHTML=st2;
+    var clo=cOpts('Frequency (GHz)','dB');
+    clo.scales.y.suggestedMin=-60; clo.scales.y.suggestedMax=5;
+    var bwLoF=f0-(p.BW/1000)/2, bwHiF=f0+(p.BW/1000)/2;
+    mkC('ch-s11',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'|S\u2082\u2081| dB (network)',data:S21,borderColor:'#1d5da8',borderWidth:2.5,pointRadius:0,tension:.1,fill:true,backgroundColor:'rgba(29,93,168,.05)'},
+      {label:'|S\u2081\u2081| dB (network)',data:S11,borderColor:'#c23b3b',borderWidth:1.5,pointRadius:0,tension:.1,borderDash:[4,3]},
+      {label:'|S\u2082\u2081| dB (ideal Chebyshev, lossless)',data:S21_cheb,borderColor:'#1e8a52',borderWidth:1,pointRadius:0,tension:.1,borderDash:[2,3]}
+    ]},options:clo,plugins:[passbandShadePlugin(freqs,bwLoF,bwHiF)]});
+    var spCenter=document.getElementById('sp-center'); if(spCenter) spCenter.textContent='Center: '+f0.toFixed(3)+' GHz';
+    var _h=document.getElementById('h4-vswr'); if(_h)_h.textContent='VSWR';
+    var vopts=cOpts('Frequency (GHz)','VSWR');
+    vopts.scales.y.suggestedMin=1; vopts.scales.y.suggestedMax=Math.min(20,Math.max.apply(null,VSWR));
+    mkC('ch-vswr',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'VSWR = (1+|\u0393|)/(1-|\u0393|)',data:VSWR,borderColor:'#6d4dc7',borderWidth:2,pointRadius:0,tension:.1,fill:true,backgroundColor:'rgba(109,77,199,.06)'}
+    ]},options:vopts,plugins:[passbandShadePlugin(freqs,bwLoF,bwHiF,'rgba(109,77,199,0.09)')]});
+    var vswrCenter=document.getElementById('vswr-center'); if(vswrCenter) vswrCenter.textContent='Center: '+f0.toFixed(3)+' GHz';
+    // Prototype element values
+    var gStr='g-values: ';
+    for(var i=1;i<=N2+1;i++) gStr+='g'+i+'='+p.g[i].toFixed(4)+(i<=N2?'  ':'');
+    drawEquivCircuit('filt', {N:N2, Leq:p.Leq, Ceq:p.Ceq, Cio:p.Cio, C12:p.C12, f0:f0, Qu:p.Qu, Qe:p.Qe, k12:p.k12, BW:p.BW, gStr:gStr, g:p.g});
+    // Real Smith chart: Γ(f)=S11(f) locus across the swept band, with start/center/stop markers
+    var locus=netSweep.map(function(s){return s.S11;});
+    var iCenter=freqs.reduce(function(bi,f,i){return Math.abs(f-f0)<Math.abs(freqs[bi]-f0)?i:bi;},0);
+    var sAtCenter=filtNetworkS(p,f0).S11;
+    drawSmith(locus, null, null, [
+      {re:locus[0][0], im:locus[0][1], color:'#1e8a52', label:'Start '+freqs[0].toFixed(1)+' GHz'},
+      {re:sAtCenter[0], im:sAtCenter[1], color:'#c23b3b', label:'Center '+f0.toFixed(1)+' GHz'},
+      {re:locus[locus.length-1][0], im:locus[locus.length-1][1], color:'#1d5da8', label:'Stop '+freqs[freqs.length-1].toFixed(1)+' GHz'}
+    ], p.Z0);
+    showRP('rp-sp'); return;
+  }
+  if(curMod === 'res'){
+    var Qu=p.Qu, Qe=p.Qe, QL=1/(1/Qu+2/Qe);
+    var S21=[],S11=[],GD=[];
+    freqs.forEach(function(fi){
+      var d=(fi-p.f0)/p.f0, D=1+(2*QL*d)*(2*QL*d);
+      var s21m=QL/Qe/Math.sqrt(D);
+      var s11r=1-2*QL/Qe/D, s11i=2*QL/Qe*(2*QL*d)/D;
+      S21.push(20*Math.log10(Math.max(s21m,1e-12)));
+      S11.push(20*Math.log10(Math.max(Math.sqrt(s11r*s11r+s11i*s11i),1e-12)));
+      GD.push(-2*QL/p.f0/(1+(2*QL*d)*(2*QL*d))/(2*Math.PI)*1e9);
+    });
+    var IL=20*Math.log10(Math.max(QL/Qe,1e-12));
+    var Leq=p.Z0/(Math.PI*p.f0*1e9)*1e9;
+    var Ceq=1/(Math.pow(2*Math.PI*p.f0*1e9,2)*(Leq*1e-9))*1e15;
+    var Req=p.Z0/Qu;
+    document.getElementById('sp-sub').textContent='f0='+p.f0.toFixed(4)+'GHz | L='+p.L+'mm | g='+p.g+'mm | Qu='+Qu.toFixed(0)+' | Qe='+Qe.toFixed(0)+' | QL='+QL.toFixed(1)+' | BW='+(p.f0/QL*1e3).toFixed(1)+'MHz';
+    var st='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">';
+    st+=statCard('f\u2080',p.f0.toFixed(4),'GHz','a')+statCard('Q_u',Qu.toFixed(0),'','g')+statCard('Q_L',QL.toFixed(1),'','g')+statCard('BW -3dB',(p.f0/QL*1e3).toFixed(1),'MHz','')+statCard('Ins.loss',IL.toFixed(2),'dB','r');
+    st+=statCard('C_gap',p.Cgap.toFixed(2),'fF','p')+statCard('L_eq',Leq.toFixed(3),'nH','')+statCard('C_eq',Ceq.toFixed(1),'fF','')+statCard('R_eq',Req.toFixed(4),'\u03a9','')+statCard('L_eff',p.Leff.toFixed(3),'mm','');
+    st+='</div>';
+    document.getElementById('sp-stats').innerHTML=st;
+    var cl=cOpts('Frequency (GHz)','dB');
+    cl.scales.y.suggestedMin=-40; cl.scales.y.suggestedMax=5;
+    mkC('ch-s11',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'|S21| dB',data:S21,borderColor:'#1d5da8',borderWidth:2,pointRadius:0,tension:.2,fill:true,backgroundColor:'rgba(29,93,168,.05)'},
+      {label:'|S11| dB',data:S11,borderColor:'#c23b3b',borderWidth:1.5,pointRadius:0,tension:.2,borderDash:[4,3]}
+    ]},options:cl});
+    var _h=document.getElementById('h4-vswr'); if(_h)_h.textContent='Group Delay (ns)';
+    mkC('ch-vswr',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(3);}),datasets:[
+      {label:'Group delay (ns)',data:GD,borderColor:'#6d4dc7',borderWidth:2,pointRadius:0,tension:.2}
+    ]},options:cOpts('Frequency (GHz)','\u03c4_g (ns)')});
+    var zArr=Array.from({length:60},function(_,k){return (k/59*p.L).toFixed(1);});
+    mkC('ch-sw',{type:'line',data:{labels:zArr,datasets:[
+      {label:'|V(z)| at f0',data:zArr.map(function(_,k){return Math.abs(Math.sin(Math.PI*k/59));}),borderColor:'#1e8a52',borderWidth:2,pointRadius:0,tension:.3,fill:true,backgroundColor:'rgba(30,138,82,.05)'}
+    ]},options:cOpts('z (mm)','|V| norm.')});
+    drawEquivCircuit('res',{Req:Req,Leq:Leq,Ceq:Ceq,Cgap:p.Cgap,f0:p.f0,Qu:Qu,QL:QL});
+    drawSmith([],[0,0],[0,0]);
+    showRP('rp-sp');
+    return;
+  }
+
+  // tline and microstrip
+  var s11=[],s21=[],vswrA=[],locus=[];
+  freqs.forEach(function(fi){
+    var lam=c/(fi*1e9*Math.sqrt(p.er))*1e3, bl=2*Math.PI/lam*p.len*1e-3;
+    var zi=zinFn(p.ZLr,p.ZLi,p.Z0,bl), g=refl(zi.r,zi.i,p.Z0);
+    var gm=Math.sqrt(g.r*g.r+g.i*g.i);
+    // |S11| in dB (VNA convention: negative for matched systems)
+    s11.push(20*Math.log10(Math.max(gm,1e-12)));
+    // S21: power delivered to load through mismatched termination:
+    // |S21|^2 = 1 - |Gamma|^2 (mismatch loss, lossless line)
+    var t2 = Math.max(1e-12, 1 - gm*gm);
+    s21.push(10*Math.log10(t2));
+    vswrA.push(Math.min(gm<1?(1+gm)/(1-gm):20, 20));
+    locus.push([g.r,g.i]);
+  });
+  var fmid=(fdFmin+fdFmax)/2, lam0=c/(fmid*1e9*Math.sqrt(p.er))*1e3;
+  var G0=refl(p.ZLr,p.ZLi,p.Z0), bl0=2*Math.PI/lam0*p.len*1e-3;
+  var ZI0=zinFn(p.ZLr,p.ZLi,p.Z0,bl0);
+  var gm0=Math.sqrt(G0.r*G0.r+G0.i*G0.i);
+  var vs0=gm0<1?(1+gm0)/(1-gm0):9999;
+  var rl0=-20*Math.log10(Math.max(gm0,1e-12));
+
+  if(curMod === 'ms'){
+    var mu0=4e-7*Math.PI;
+    // 2-port lossy microstrip: ABCD matrix -> S-parameters
+    // gamma = alpha + j*beta (complex propagation constant)
+    // For matched termination (port Z = Z0):
+    //   S21 = 2 / (A+B/Z0+C*Z0+D) = exp(-gamma*L) for matched line
+    //   S11 = (A+B/Z0-C*Z0-D) / (A+B/Z0+C*Z0+D) = 0 for matched, non-zero for ZL!=Z0
+    // With load ZL != Z0: use exact ABCD approach
+    var ms_s11=[],ms_s21=[],ms_vswr=[];
+    freqs.forEach(function(fi){
+      var Rs=Math.sqrt(Math.PI*fi*1e9*mu0/5.8e7);
+      var ac_np=Rs/(p.Z0*p.W*1e-3);  // conductor loss Np/m
+      var ad_np=Math.PI*fi*1e9*Math.sqrt(p.eref)/3e8*p.tand; // dielectric loss Np/m
+      var alpha=ac_np+ad_np;
+      var lam_fi=c/(fi*1e9*Math.sqrt(p.eref))*1e3;
+      var beta_fi=2*Math.PI/lam_fi;
+      var gL=alpha*p.len*1e-3;  // gamma*L (real part = attenuation)
+      var bL=beta_fi*p.len*1e-3; // beta*L
+      // ABCD matrix of lossy line:
+      // A=D=cosh(gL)cos(bL)+j*sinh(gL)... use complex sinh/cosh
+      // cosh(a+jb) = cosh(a)cos(b) + j*sinh(a)sin(b)
+      // sinh(a+jb) = sinh(a)cos(b) + j*cosh(a)sin(b)
+      var chR=Math.cosh(gL)*Math.cos(bL), chI=Math.sinh(gL)*Math.sin(bL);
+      var shR=Math.sinh(gL)*Math.cos(bL), shI=Math.cosh(gL)*Math.sin(bL);
+      var Z0=p.Z0;
+      // ABCD: A=cosh(gamma*L), B=Z0*sinh(gamma*L), C=sinh(gamma*L)/Z0, D=cosh(gamma*L)
+      var Ar=chR, Ai=chI, Br=Z0*shR, Bi=Z0*shI, Cr=shR/Z0, Ci=shI/Z0, Dr=chR, Di=chI;
+      // S-params from ABCD (port impedance Z0 at both ports):
+      // denom = A + B/Z0 + C*Z0 + D
+      var denR=Ar+Br/Z0+Cr*Z0+Dr, denI=Ai+Bi/Z0+Ci*Z0+Di;
+      var denMag2=denR*denR+denI*denI;
+      // S21 = 2 / denom
+      var s21R=2*denR/denMag2, s21I=-2*denI/denMag2;
+      var s21mag=Math.sqrt(s21R*s21R+s21I*s21I);
+      // S11 = (A + B/Z0 - C*Z0 - D) / denom
+      var numR=Ar+Br/Z0-Cr*Z0-Dr, numI=Ai+Bi/Z0-Ci*Z0-Di;
+      var s11R=(numR*denR+numI*denI)/denMag2, s11I=(numI*denR-numR*denI)/denMag2;
+      var s11mag=Math.sqrt(s11R*s11R+s11I*s11I);
+      ms_s21.push(20*Math.log10(Math.max(s21mag,1e-12)));
+      ms_s11.push(20*Math.log10(Math.max(s11mag,1e-12)));
+      ms_vswr.push(s11mag<1?(1+s11mag)/(1-s11mag):99);
+    });
+    var fmid_ms=(fdFmin+fdFmax)/2;
+    var lam_mid=c/(fmid_ms*1e9*Math.sqrt(p.eref))*1e3;
+    var ac_mid=Math.sqrt(Math.PI*fmid_ms*1e9*mu0/5.8e7)/(p.Z0*p.W*1e-3)*8.686;
+    var ad_mid=Math.PI*fmid_ms*1e9*Math.sqrt(p.eref)/3e8*p.tand*8.686;
+    document.getElementById('sp-sub').textContent='Z0='+p.Z0.toFixed(1)+'\u03a9 | \u03b5r_eff='+p.eref.toFixed(3)+' | W='+p.W+'mm | L='+p.len+'mm | matched 2-port';
+    var st2='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">';
+    st2+=statCard('Z\u2080',p.Z0.toFixed(2),'\u03a9','')+statCard('\u03b5_r,eff',p.eref.toFixed(3),'','p')+statCard('\u03bbg/2',(lam_mid/2).toFixed(2),'mm','')+statCard('\u03b1_c',ac_mid.toFixed(3),'dB/m','')+statCard('\u03b1_d',ad_mid.toFixed(3),'dB/m','');
+    st2+='</div>';
+    document.getElementById('sp-stats').innerHTML=st2;
+    mkC('ch-s11',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(2);}),datasets:[
+      {label:'|S\u2082\u2081| dB',data:ms_s21,borderColor:'#1d5da8',borderWidth:2,pointRadius:0,tension:.2,fill:true,backgroundColor:'rgba(29,93,168,.05)'},
+      {label:'|S\u2081\u2081| dB',data:ms_s11,borderColor:'#c23b3b',borderWidth:1.5,pointRadius:0,tension:.2,borderDash:[4,3]}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:11}}},scales:{x:{title:{display:true,text:'Frequency (GHz)',color:'#63708a'},ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'Magnitude (dB)',color:'#63708a'},suggestedMax:0}}}});
+    var _h=document.getElementById('h4-vswr'); if(_h)_h.textContent='VSWR';
+    mkC('ch-vswr',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(2);}),datasets:[
+      {label:'VSWR',data:ms_vswr,borderColor:'#b5750a',borderWidth:2,pointRadius:0,tension:.2}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:11}}},scales:{x:{title:{display:true,text:'Frequency (GHz)',color:'#63708a'},ticks:{maxTicksLimit:8}},y:{suggestedMin:1,suggestedMax:5}}}});
+    var lam_g_mid = gLam(fmid_ms, p.eref);
+    drawEquivCircuit('ms',{Z0:p.Z0,eref:p.eref,len:p.len,W:p.W,h:p.h,tand:p.tand,fCenter:fmid_ms,lambdaG:lam_g_mid});
+  } else {
+    document.getElementById('sp-sub').textContent='Z0='+p.Z0+'\u03a9 | ZL='+p.ZLr+'+j'+p.ZLi+'\u03a9 | L='+p.len+'mm | \u03b5r='+p.er;
+    var st3='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">';
+    st3+=statCard('|\u0393|',gm0.toFixed(3),'','p')+statCard('VSWR',vs0===9999?'\u221e':vs0.toFixed(2),'','a')+statCard('Return loss',rl0.toFixed(1),'dB','')+statCard('Zin real',ZI0.r.toFixed(2),'\u03a9','')+statCard('Zin imag',ZI0.i.toFixed(2),'\u03a9','');
+    st3+='</div>';
+    document.getElementById('sp-stats').innerHTML=st3;
+    mkC('ch-s11',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(2);}),datasets:[
+      {label:'|S\u2081\u2081| dB',data:s11,borderColor:'#1d5da8',borderWidth:2,pointRadius:0,tension:.2,fill:false},
+      {label:'|S\u2082\u2081| dB',data:s21,borderColor:'#c23b3b',borderWidth:1.6,pointRadius:0,tension:.2,borderDash:[4,3]}
+    ]},options:cOpts('Frequency (GHz)','|S| (dB)')});
+    var _h=document.getElementById('h4-vswr'); if(_h)_h.textContent='VSWR';
+    mkC('ch-vswr',{type:'line',data:{labels:freqs.map(function(v){return v.toFixed(2);}),datasets:[
+      {label:'VSWR',data:vswrA,borderColor:'#b5750a',borderWidth:2,pointRadius:0,tension:.2}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:11}}},scales:{x:{title:{display:true,text:'Frequency (GHz)',color:'#63708a'},ticks:{maxTicksLimit:8}},y:{suggestedMin:1,suggestedMax:8}}}});
+    drawSmith(locus,[refl(ZI0.r,ZI0.i,p.Z0).r,refl(ZI0.r,ZI0.i,p.Z0).i],[G0.r,G0.i]);
+    drawEquivCircuit('tline',{Z0:p.Z0,er:p.er,len:p.len,ZLr:p.ZLr,ZLi:p.ZLi,fCenter:fmid});
+  }
+
+  var zArr2=Array.from({length:80},function(_,k){return k/79*p.len;});
+  var beta0=2*Math.PI/lam0;
+  var Varr=zArr2.map(function(z){
+    var b2=2*beta0*z*1e-3;
+    return Math.sqrt(Math.pow(1+G0.r*Math.cos(b2)+G0.i*Math.sin(b2),2)+Math.pow(G0.i*Math.cos(b2)-G0.r*Math.sin(b2),2));
+  });
+  mkC('ch-sw',{type:'line',data:{labels:zArr2.map(function(v){return v.toFixed(1);}),datasets:[
+    {label:'|V(z)| at f_center',data:Varr,borderColor:'#1e8a52',borderWidth:2,pointRadius:0,tension:.3,fill:true,backgroundColor:'rgba(30,138,82,.05)'}
+  ]},options:cOpts('z (mm)','|V| norm.')});
+
+  showRP('rp-sp');
+}
+
+/* ═══════════════════════════════════════════════════════
+   FIELD DISTRIBUTION
+═══════════════════════════════════════════════════════ */
+function runField(){
+  var p = getP(); if(!p) return;
+  if(curMod==='filt') updateFiltSweepRange(p);
+  fdFmin = gv('fs1')||0.5; fdFmax = gv('fs2')||6;
+  fdParams = p;
+  document.getElementById('fdrng').value = 50;
+  var fmid = fdFmin + (fdFmax-fdFmin)*0.5;
+  document.getElementById('fd-sub').textContent = fdFmin.toFixed(2)+'\u2013'+fdFmax.toFixed(2)+' GHz | slide to scan';
+  showRP('rp-fd');
+  drawField(fmid, p);
+}
+
+document.getElementById('fdrng').addEventListener('input', function(){
+  var p = getP(); if(!p) return;
+  var f = fdFmin + (fdFmax-fdFmin)*(this.value/100);
+  drawField(f, p);
+});
+
+function setFiltFieldMode(mode){
+  filtFieldMode = mode;
+  var p = getP(); if(!p) return;
+  var rng = document.getElementById('fdrng');
+  var frac = rng ? parseInt(rng.value,10)/100 : 0.5;
+  var fGHz = fdFmin + frac*(fdFmax-fdFmin);
+  drawField(fGHz, p);
+}
+/* FIX (P3): the Field Distribution canvas used to give every ring the SAME
+   global |S21(f)| amplitude, even though a real per-ring stored-energy
+   calculation (filtRingEnergiesAt/filtEnergySweep, above) already existed and
+   was only being used for the Geometry View's glow animation. Rings genuinely
+   don't all store the same energy at a given frequency (e.g. off-center rings
+   in a 3-pole filter respond differently) — this reuses that SAME real data
+   for the Field Distribution panel instead of a single shared scalar. Prefers
+   the already-cached, already-normalized filtGlowData sweep (interpolated to
+   the exact slider frequency) so both panels agree pixel-for-pixel on which
+   ring is "hottest" at a given frequency; falls back to a fresh calculation
+   if that cache isn't populated yet (e.g. before the first Run). */
+function getFiltRingAmps(p, fGHz){
+  var data = filtGlowData;
+  if(data && data.freqs && data.freqs.length>1){
+    var freqs=data.freqs, pts=freqs.length;
+    var frac=(fGHz-freqs[0])/(freqs[pts-1]-freqs[0]);
+    frac=Math.max(0,Math.min(1,frac));
+    var idx=frac*(pts-1);
+    var i0=Math.max(0,Math.min(pts-1,Math.floor(idx)));
+    var i1=Math.min(pts-1,i0+1);
+    var f=idx-i0;
+    var row0=data.energies[i0], row1=data.energies[i1];
+    return row0.map(function(e,n){ return e*(1-f)+row1[n]*f; });
+  }
+  // Fallback: no cached sweep yet — compute directly for this one frequency.
+  try{
+    var raw=filtRingEnergiesAt(p, fGHz);
+    var mx=Math.max.apply(null, raw.concat([1e-30]));
+    return raw.map(function(e){ return e/mx; });
+  }catch(e){
+    return new Array(p.N).fill(1); // last-resort: uniform, never throws
+  }
+}
+
+/* SVG-based Field Distribution renderer for the Ring Filter module — replaces
+   the old <canvas> raster drawing so text and lines stay crisp at any zoom /
+   pixel density (canvas has no devicePixelRatio scaling here, so it went
+   soft on high-DPI screens), and so label positions can be pinned exactly
+   (no more arrows/labels drifting into each other at different amplitudes).
+   Physics is unchanged: same filtNetworkS/getFiltRingAmps real per-frequency,
+   per-ring data as before — only the drawing technology changed. */
+function drawFieldFiltSVG(fGHz, p){
+  var wrap = document.getElementById('fdwrap');
+  var cvs = document.getElementById('fdcvs');
+  var CW = 700, CH = 340; // fixed internal coordinate system; scales via viewBox, stays crisp at any container size
+
+  var net = filtNetworkS(p, fGHz);
+  var s21m = cx_abs(net.S21), s11m = cx_abs(net.S11);
+  var s21dB = 20*Math.log10(Math.max(s21m,1e-12));
+  var N = p.N;
+  var mX=70, tW=CW-mX*2, cy3=Math.round(CH*0.40);
+  var ringR = Math.min((tW/(N+1))*0.34, 78);
+  var centers=[]; for(var ri=0; ri<N; ri++) centers.push(mX+tW*(ri+1)/(N+1));
+  var isH = (filtFieldMode === 'H');
+  var fieldCol = isH ? '109,77,199' : '29,93,168';
+  var fieldColHex = isH ? '#6d4dc7' : '#1d5da8';
+  var ringAmps = getFiltRingAmps(p, fGHz);
+  var ringCols=['#1d5da8','#6d4dc7','#1e8a52'];
+  // Ring/feed trace width tied to the REAL W/R ratio (same W_ring/W_feed
+  // architecture as the Live Geometry View) — this diagram is schematic
+  // (ringR is a layout-fit size, not literally to-scale), but the trace
+  // THICKNESS relative to the ring still genuinely tracks the real strip
+  // width p.W the user sets, instead of a fixed constant. Calibrated so the
+  // default design (W=3mm, R\u224810.91mm) reproduces the original fixed look.
+  var W_ring_vis = Math.max(3, ringR*(p.W/p.R)*0.51);
+  var W_feed_vis = W_ring_vis;
+
+  function esc(n){ return n.toFixed(1); }
+  var s = '<svg viewBox="0 0 '+CW+' '+CH+'" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block" xmlns="http://www.w3.org/2000/svg">';
+  s += '<rect x="0" y="0" width="'+CW+'" height="'+CH+'" fill="#ffffff"/>';
+
+  s += '<defs>';
+  centers.forEach(function(cx3, idx){
+    var amp = ringAmps[idx]!==undefined ? ringAmps[idx] : s21m;
+    s += '<radialGradient id="fdGlow'+idx+'" cx="50%" cy="50%" r="50%">'
+      + '<stop offset="0%" stop-color="rgba('+fieldCol+','+(0.06+amp*0.32).toFixed(3)+')"/>'
+      + '<stop offset="60%" stop-color="rgba('+fieldCol+','+(0.02+amp*0.13).toFixed(3)+')"/>'
+      + '<stop offset="100%" stop-color="rgba('+fieldCol+',0)"/>'
+      + '</radialGradient>';
+  });
+  s += '</defs>';
+
+  // Ambient tint band behind everything
+  s += '<rect x="'+esc(mX-10)+'" y="'+esc(cy3-ringR-26)+'" width="'+esc(tW+20)+'" height="'+esc(2*(ringR+26)+34)+'" fill="rgba(99,102,241,0.05)"/>';
+
+  // Feed lines P1/P2
+  s += '<line x1="'+esc(mX-40)+'" y1="'+cy3+'" x2="'+esc(centers[0]-ringR)+'" y2="'+cy3+'" stroke="rgba(181,117,10,0.7)" stroke-width="'+W_feed_vis.toFixed(2)+'"/>';
+  s += '<line x1="'+esc(centers[N-1]+ringR)+'" y1="'+cy3+'" x2="'+esc(mX+tW+40)+'" y2="'+cy3+'" stroke="rgba(181,117,10,0.7)" stroke-width="'+W_feed_vis.toFixed(2)+'"/>';
+  s += '<text x="'+esc(mX-46)+'" y="'+(cy3+4)+'" fill="#b5750a" font-size="12" font-weight="bold" text-anchor="middle" font-family="Courier New,monospace">P1</text>';
+  s += '<text x="'+esc(mX+tW+46)+'" y="'+(cy3+4)+'" fill="#b5750a" font-size="12" font-weight="bold" text-anchor="middle" font-family="Courier New,monospace">P2</text>';
+
+  // Coupling gap markers between rings
+  var gapGlow = Math.min(1, s21m*1.3);
+  for(var gi=0; gi<N-1; gi++){
+    var gx=(centers[gi]+centers[gi+1])/2;
+    s += '<line x1="'+esc(gx)+'" y1="'+esc(cy3-ringR-6)+'" x2="'+esc(gx)+'" y2="'+esc(cy3+ringR+6)+'" stroke="rgba(194,59,59,'+(0.25+gapGlow*0.6).toFixed(3)+')" stroke-width="1.2" stroke-dasharray="3,3"/>';
+  }
+
+  // Soft energy glow behind each ring (real per-ring amplitude)
+  centers.forEach(function(cx3, idx){
+    s += '<circle cx="'+esc(cx3)+'" cy="'+cy3+'" r="'+esc(ringR*2.15)+'" fill="url(#fdGlow'+idx+')"/>';
+  });
+
+  // Rings + field ticks + sparse vector arrows + labels
+  centers.forEach(function(cx3, idx){
+    var col=ringCols[idx%ringCols.length];
+    var ringAmp = ringAmps[idx]!==undefined ? ringAmps[idx] : s21m;
+    s += '<circle cx="'+esc(cx3)+'" cy="'+cy3+'" r="'+esc(ringR)+'" fill="none" stroke="'+col+'" stroke-width="'+W_ring_vis.toFixed(2)+'" opacity="'+(0.25+ringAmp*0.55).toFixed(3)+'"/>';
+    var nTicks=36, maxArrowReach=0;
+    for(var t=0;t<nTicks;t++){
+      var th=2*Math.PI*t/nTicks;
+      var spatial = isH ? Math.abs(Math.cos(th)) : Math.abs(Math.sin(th));
+      var fieldAmp = spatial*ringAmp;
+      var rIn=ringR-4, rOut=ringR+4+fieldAmp*16;
+      var x1=cx3+rIn*Math.cos(th), y1=cy3+rIn*Math.sin(th);
+      var x2=cx3+rOut*Math.cos(th), y2=cy3+rOut*Math.sin(th);
+      s += '<line x1="'+esc(x1)+'" y1="'+esc(y1)+'" x2="'+esc(x2)+'" y2="'+esc(y2)+'" stroke="rgba('+fieldCol+','+(0.15+fieldAmp*0.8).toFixed(3)+')" stroke-width="1.2"/>';
+      if(t%4===0 && fieldAmp>0.08){
+        // Reduced max reach (vs. the old canvas version) + labels pushed
+        // further down below, so arrows can never overlap the ring/substrate text.
+        var arR = ringR+14+fieldAmp*8;
+        if(arR>maxArrowReach) maxArrowReach=arR;
+        var ax=cx3+arR*Math.cos(th), ay=cy3+arR*Math.sin(th);
+        var len=6+fieldAmp*7;
+        var dx,dy;
+        if(isH){ dx=-Math.sin(th)*len; dy=Math.cos(th)*len; } else { dx=Math.cos(th)*len; dy=Math.sin(th)*len; }
+        var ax1=ax-dx/2, ay1=ay-dy/2, ax2=ax+dx/2, ay2=ay+dy/2;
+        var ang=Math.atan2(dy,dx), aCol='rgba('+fieldCol+','+(0.35+fieldAmp*0.5).toFixed(3)+')';
+        s += '<line x1="'+esc(ax1)+'" y1="'+esc(ay1)+'" x2="'+esc(ax2)+'" y2="'+esc(ay2)+'" stroke="'+aCol+'" stroke-width="1.1"/>';
+        var hx1=ax2-5*Math.cos(ang-0.4), hy1=ay2-5*Math.sin(ang-0.4);
+        var hx2=ax2-5*Math.cos(ang+0.4), hy2=ay2-5*Math.sin(ang+0.4);
+        s += '<line x1="'+esc(ax2)+'" y1="'+esc(ay2)+'" x2="'+esc(hx1)+'" y2="'+esc(hy1)+'" stroke="'+aCol+'" stroke-width="1.1"/>';
+        s += '<line x1="'+esc(ax2)+'" y1="'+esc(ay2)+'" x2="'+esc(hx2)+'" y2="'+esc(hy2)+'" stroke="'+aCol+'" stroke-width="1.1"/>';
+      }
+    }
+    // Ring label — pinned safely below the furthest arrow tip actually drawn this frame (no overlap, at any amplitude)
+    var labelY = cy3+Math.max(ringR+30, maxArrowReach+14);
+    s += '<text x="'+esc(cx3)+'" y="'+esc(labelY)+'" fill="'+col+'" font-size="11" text-anchor="middle" font-family="Courier New,monospace">Ring '+(idx+1)+'</text>';
+  });
+
+  // Substrate caption — one fixed line below the tallest ring label, never competing with per-ring text
+  s += '<text x="'+esc(mX+tW/2)+'" y="'+esc(cy3+ringR+70)+'" fill="rgba(90,100,125,0.9)" font-size="10" text-anchor="middle" font-family="Courier New,monospace">Substrate \u03b5r='+p.erRaw+' h='+p.h+'mm</text>';
+
+  // Bottom readout bar — text and progress bar given clear, non-overlapping vertical spacing
+  var by3=CH-52;
+  s += '<rect x="'+mX+'" y="'+by3+'" width="'+esc(tW)+'" height="40" rx="5" fill="rgba(0,0,0,0.45)"/>';
+  s += '<text x="'+esc(mX+14)+'" y="'+(by3+14)+'" fill="rgba('+fieldCol+',0.95)" font-size="11" text-anchor="start" font-family="Courier New,monospace">'+(isH?'H-field':'E-field')+' |S21(f)| = '+s21dB.toFixed(1)+' dB</text>';
+  s += '<rect x="'+esc(mX+14)+'" y="'+(by3+20)+'" width="220" height="8" rx="2" fill="rgba('+fieldCol+',0.15)" stroke="rgba('+fieldCol+',0.3)" stroke-width="0.8"/>';
+  s += '<rect x="'+esc(mX+14)+'" y="'+(by3+20)+'" width="'+esc(Math.max(0,s21m*220))+'" height="8" rx="2" fill="'+fieldColHex+'"/>';
+  s += '<text x="'+esc(mX+tW-14)+'" y="'+(by3+34)+'" fill="#b5750a" font-size="12" font-weight="bold" text-anchor="end" font-family="Courier New,monospace">f = '+fGHz.toFixed(4)+' GHz &#160;&#160;|S11(f)|='+(20*Math.log10(Math.max(s11m,1e-12))).toFixed(1)+'dB</text>';
+
+  s += '</svg>';
+  cvs.innerHTML = s;
+
+  // Legend + intensity bar: reflect exactly what's on screen (only E or H —
+  // whichever is active), recolored to match, so nothing is shown that
+  // isn't actually drawn.
+  var legend = document.getElementById('fdlegend');
+  if(legend){
+    legend.innerHTML =
+      '<div class="fll" style="opacity:1"><div class="flc" style="background:'+fieldColHex+'"></div>'+(isH?'H-field':'E-field')+' (radial ticks)</div>'
+      + '<div class="fll" style="opacity:.5"><div class="flc" style="background:'+(isH?'#1d5da8':'#6d4dc7')+'"></div>'+(isH?'E-field':'H-field')+' \u2014 switch above</div>'
+      + '<div class="fll" style="opacity:1"><div class="flc" style="background:#b5750a"></div>Feed line (P1/P2)</div>';
+  }
+  var grad = document.getElementById('fdGradbar');
+  if(grad) grad.style.background = 'linear-gradient(90deg,rgba('+fieldCol+',.08),rgba('+fieldCol+',.95))';
+}
+
+function drawField(fGHz, p){
+  document.getElementById('fdfreq').textContent = 'Frequency: '+fGHz.toFixed(3)+' GHz';
+  if(curMod === 'filt'){ drawFieldFiltSVG(fGHz, p); return; }
+  var cvs = document.getElementById('fdcvs');
+  var wrap = document.getElementById('fdwrap');
+  var CW = wrap.clientWidth||800, CH = wrap.clientHeight||300;
+  cvs.width = CW; cvs.height = CH;
+  var ctx = cvs.getContext('2d');
+  ctx.clearRect(0,0,CW,CH);
+
+  var c = 3e8;
+
+  if(curMod === 'res'){
+    // Resonator field: full structure view
+    var Qu=p.Qu, Qe=p.Qe, QL=1/(1/Qu+2/Qe);
+    var delta=(fGHz-p.f0)/p.f0, D=1+(2*QL*delta)*(2*QL*delta);
+    var amp=QL/Qe/Math.sqrt(D); // 0..1 field amplitude
+    var s21dB=20*Math.log10(Math.max(amp,1e-12));
+    var phaseDeg=Math.atan2(-2*QL*delta,1)*180/Math.PI;
+
+    var mX=70, tW=CW-mX*2;
+    var gW=Math.max(6,Math.min(22,(p.g/Math.max(p.L,10))*tW*6));
+    var lfW=Math.max(28,Math.min(95,(p.Lf/Math.max(p.L+2*p.Lf,10))*tW*0.44));
+    var resW=tW-2*lfW-2*gW;
+    var strH=Math.max(10,Math.min(38,p.W*6));
+    var feedH=Math.max(8,Math.min(32,p.Wf*5.5));
+    var cy2=CH*0.41, resY2=cy2-strH/2, feedY2=cy2-feedH/2;
+    var x0=mX, xg1=x0+lfW, xr0=xg1+gW, xr1=xr0+resW, xg2=xr1, xg2e=xg2+gW, x1=xg2e+lfW;
+
+    // Substrate
+    var subH=strH+42, subY2=cy2-subH/2-7;
+    ctx.fillStyle='rgba(99,102,241,'+((0.03+p.erRaw*0.005)).toFixed(3)+')';
+    ctx.fillRect(x0,subY2,x1-x0,subH);
+    ctx.strokeStyle='rgba(99,102,241,0.18)'; ctx.lineWidth=0.5;
+    ctx.strokeRect(x0,subY2,x1-x0,subH);
+    ctx.fillStyle='rgba(99,102,241,0.4)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+    ctx.fillText('Substrate \u03b5r='+p.erRaw+' h='+p.h+'mm', (x0+x1)/2, subY2+subH+11);
+
+    // Ground plane
+    ctx.fillStyle='rgba(181,117,10,0.1)'; ctx.fillRect(x0,subY2+subH,x1-x0,11);
+    ctx.strokeStyle='#b5750a'; ctx.lineWidth=1; ctx.strokeRect(x0,subY2+subH,x1-x0,11);
+
+    // Feed lines
+    [[x0,lfW],[xg2e,lfW]].forEach(function(a){
+      ctx.fillStyle='rgba(181,117,10,0.13)'; ctx.fillRect(a[0],feedY2,a[1],feedH);
+      ctx.strokeStyle='rgba(181,117,10,0.6)'; ctx.lineWidth=1; ctx.strokeRect(a[0],feedY2,a[1],feedH);
+    });
+
+    // Gaps with field leakage
+    var gA=Math.max(0.08,0.08+amp*0.55);
+    [xg1,xg2].forEach(function(gx){
+      var gy3=Math.min(feedY2,resY2)-3, gh3=Math.max(feedH,strH)+6;
+      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(gx,gy3,gW,gh3);
+      ctx.strokeStyle='rgba(194,59,59,'+(0.25+amp*0.4)+')'; ctx.lineWidth=0.8;
+      ctx.setLineDash([2,2]); ctx.strokeRect(gx,gy3,gW,gh3); ctx.setLineDash([]);
+      for(var yy=gy3;yy<gy3+gh3;yy+=5){
+        ctx.strokeStyle='rgba(194,59,59,'+(gA*0.5)+')'; ctx.lineWidth=0.4;
+        ctx.beginPath(); ctx.moveTo(gx,yy); ctx.bezierCurveTo(gx,yy+3,gx+gW,yy+3,gx+gW,yy); ctx.stroke();
+      }
+    });
+
+    // Resonator strip
+    ctx.fillStyle='rgba(29,93,168,'+(0.07+amp*0.14)+')';
+    ctx.fillRect(xr0,resY2,resW,strH);
+    ctx.strokeStyle='rgba(29,93,168,'+(0.5+amp*0.4)+')'; ctx.lineWidth=1.8;
+    ctx.strokeRect(xr0,resY2,resW,strH);
+
+    // Standing wave
+    ctx.beginPath();
+    for(var i2=0;i2<=100;i2++){
+      var fr2=i2/100, xp2=xr0+fr2*resW, a2=Math.sin(Math.PI*fr2)*amp;
+      i2===0?ctx.moveTo(xp2,cy2-a2*(strH/2-2)):ctx.lineTo(xp2,cy2-a2*(strH/2-2));
+    }
+    ctx.strokeStyle='rgba(109,77,199,'+(0.2+amp*0.75)+')'; ctx.lineWidth=2.2; ctx.stroke();
+
+    // E-field lines
+    for(var ei=0;ei<=28;ei++){
+      var fr3=ei/28, xe=xr0+fr3*resW;
+      var localV=Math.abs(Math.sin(Math.PI*fr3))*amp;
+      var lH=Math.max(3,subH*0.12+localV*subH*0.72);
+      var alpha2=Math.min(0.88,0.04+localV*0.84);
+      ctx.strokeStyle='rgba(29,93,168,'+alpha2.toFixed(3)+')'; ctx.lineWidth=0.7;
+      ctx.beginPath();ctx.moveTo(xe,resY2+strH);ctx.lineTo(xe,resY2+strH+lH);ctx.stroke();
+      ctx.fillStyle='rgba(29,93,168,'+alpha2.toFixed(3)+')';
+      ctx.beginPath();ctx.moveTo(xe-2.5,resY2+strH+lH-6);ctx.lineTo(xe+2.5,resY2+strH+lH-6);ctx.lineTo(xe,resY2+strH+lH);ctx.fill();
+    }
+
+    // H-field loops (current is max at center of half-wave resonator)
+    // Use normalized shape so loops stay visible; overall brightness tracks resonance.
+    var bright=Math.max(0.35,Math.min(1,amp*3));  // resonance strength -> brightness
+    for(var hi=0;hi<11;hi++){
+      var fr4=(hi+0.5)/11, xh=xr0+fr4*resW;
+      var shapeI=Math.abs(Math.cos(Math.PI*fr4));   // normalized current profile 0..1
+      var rx2=6+shapeI*20;                          // 6..26 px wide, always visible
+      var op=(0.25+shapeI*0.55)*bright;             // 0.25..0.80 scaled by brightness
+      ctx.strokeStyle='rgba(109,77,199,'+op.toFixed(3)+')'; ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.ellipse(xh,resY2+strH+22,rx2,7,0,Math.PI,2*Math.PI);ctx.stroke();
+      // circulation arrows on the loops to convey H-field direction
+      ctx.fillStyle='rgba(109,77,199,'+op.toFixed(3)+')';
+      ctx.beginPath();
+      ctx.moveTo(xh-rx2,resY2+strH+22);
+      ctx.lineTo(xh-rx2+4,resY2+strH+19);
+      ctx.lineTo(xh-rx2+4,resY2+strH+25);
+      ctx.fill();
+    }
+
+    // Port labels
+    ctx.fillStyle='rgba(181,117,10,0.85)'; ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+    ctx.fillText('P1',x0+lfW/2,subY2-4); ctx.fillText('P2',xg2e+lfW/2,subY2-4);
+
+    // Bottom metrics bar
+    var by2=CH-46;
+    ctx.fillStyle='rgba(0,0,0,0.4)'; ctx.beginPath();ctx.roundRect(mX,by2,tW,38,5);ctx.fill();
+    // S21 bar
+    ctx.fillStyle='rgba(29,93,168,0.15)'; ctx.fillRect(mX+12,by2+6,200,8);
+    ctx.fillStyle='#1d5da8'; ctx.fillRect(mX+12,by2+6,Math.max(0,amp*200),8);
+    ctx.strokeStyle='rgba(29,93,168,0.3)'; ctx.lineWidth=0.8; ctx.strokeRect(mX+12,by2+6,200,8);
+    ctx.fillStyle='rgba(29,93,168,0.8)'; ctx.font='9px Courier New'; ctx.textAlign='left';
+    ctx.fillText('|S21| = '+s21dB.toFixed(1)+' dB', mX+12, by2+3);
+    ctx.fillStyle='#b5750a'; ctx.font='bold 11px Courier New'; ctx.textAlign='right';
+    ctx.fillText('f = '+fGHz.toFixed(4)+' GHz', mX+tW-12, by2+14);
+    ctx.fillStyle='rgba(29,93,168,0.6)'; ctx.font='9px Courier New';
+    ctx.fillText('f0='+p.f0.toFixed(4)+'GHz  \u0394f='+((fGHz-p.f0)*1000).toFixed(1)+'MHz  QL='+QL.toFixed(1)+'  phase='+phaseDeg.toFixed(1)+'\u00b0', mX+tW-12, by2+28);
+    return;
+  }
+
+
+
+  // Generic (tline / microstrip)
+  var lam=c/(fGHz*1e9*Math.sqrt(p.er))*1e3, beta=2*Math.PI/(lam*1e-3);
+  var L=p.len||30;
+  var G=refl(p.ZLr||p.Z0, p.ZLi||0, p.Z0);
+
+  var sX=50, sW=CW-100, gY2=Math.round(CH*0.67), subH2=Math.round(CH*0.22), subY=gY2-subH2;
+  var stripH=9, stripY=subY-stripH;
+
+  ctx.fillStyle='rgba(181,117,10,0.1)'; ctx.fillRect(sX,gY2,sW,13);
+  ctx.strokeStyle='#b5750a'; ctx.lineWidth=1; ctx.strokeRect(sX,gY2,sW,13);
+  ctx.fillStyle='rgba(181,117,10,0.5)'; ctx.font='8px Courier New'; ctx.textAlign='left'; ctx.fillText('Ground plane',sX+6,gY2+10);
+
+  ctx.fillStyle='rgba(99,102,241,'+(0.04+p.er*0.006).toFixed(3)+')';
+  ctx.fillRect(sX,subY,sW,subH2);
+  ctx.strokeStyle='rgba(129,140,248,0.18)'; ctx.lineWidth=0.5; ctx.strokeRect(sX,subY,sW,subH2);
+  ctx.fillStyle='rgba(129,140,248,0.55)'; ctx.font='8px Courier New';
+  ctx.fillText('Substrate  \u03b5r_eff='+p.er.toFixed(2), sX+6, subY+subH2/2+3);
+
+  ctx.fillStyle='rgba(29,93,168,0.18)'; ctx.fillRect(sX,stripY,sW,stripH);
+  ctx.strokeStyle='#1d5da8'; ctx.lineWidth=1.5; ctx.strokeRect(sX,stripY,sW,stripH);
+  ctx.fillStyle='rgba(29,93,168,0.6)';
+  ctx.fillText(curMod==='ms'?'Strip conductor W='+p.W.toFixed(2)+'mm':'Signal conductor', sX+6, stripY-4);
+
+  var n=120;
+  var Vpts=Array.from({length:n},function(_,k){
+    var frac=k/(n-1), z=frac*L, b2=2*beta*z*1e-3;
+    var Vm=Math.sqrt(Math.pow(1+G.r*Math.cos(b2)+G.i*Math.sin(b2),2)+Math.pow(G.i*Math.cos(b2)-G.r*Math.sin(b2),2));
+    return {x:sX+frac*sW, Vm:Vm};
+  });
+  var maxV=Math.max.apply(null,Vpts.map(function(pt){return pt.Vm;}));
+  if(maxV<0.01)maxV=1;
+
+  var Ipts=Array.from({length:n},function(_,k){
+    var frac=k/(n-1), z=frac*L, b2=2*beta*z*1e-3;
+    var Im=Math.sqrt(Math.pow(1-G.r*Math.cos(b2)-G.i*Math.sin(b2),2)+Math.pow(G.r*Math.sin(b2)-G.i*Math.cos(b2),2))/p.Z0;
+    return {x:sX+frac*sW, Im:Im};
+  });
+  var maxI=Math.max.apply(null,Ipts.map(function(pt){return pt.Im;}));
+  if(maxI<1e-10)maxI=1;
+
+  var envH=subY-stripH-8;
+  ctx.beginPath();
+  Vpts.forEach(function(pt,i){i===0?ctx.moveTo(pt.x,stripY-5-pt.Vm/maxV*envH*0.44):ctx.lineTo(pt.x,stripY-5-pt.Vm/maxV*envH*0.44);});
+  ctx.strokeStyle='rgba(181,117,10,0.8)'; ctx.lineWidth=2; ctx.stroke();
+
+  ctx.beginPath();
+  Ipts.forEach(function(pt,i){i===0?ctx.moveTo(pt.x,stripY-5-pt.Im/maxI*envH*0.34):ctx.lineTo(pt.x,stripY-5-pt.Im/maxI*envH*0.34);});
+  ctx.strokeStyle='rgba(30,138,82,0.7)'; ctx.lineWidth=1.5; ctx.setLineDash([5,3]); ctx.stroke(); ctx.setLineDash([]);
+
+  for(var ei2=0;ei2<=26;ei2++){
+    var frac5=ei2/26, xe2=sX+frac5*sW;
+    var vPt=Vpts[Math.round(frac5*(n-1))], a3=vPt?vPt.Vm/maxV:1;
+    var lH2=Math.min(subH2*0.9, subH2*0.2+a3*subH2*0.7);
+    var al3=Math.min(0.85, 0.08+a3*0.77);
+    ctx.strokeStyle='rgba(29,93,168,'+al3.toFixed(3)+')'; ctx.lineWidth=0.7;
+    ctx.beginPath();ctx.moveTo(xe2,subY);ctx.lineTo(xe2,subY+lH2);ctx.stroke();
+    ctx.fillStyle='rgba(29,93,168,'+al3.toFixed(3)+')';
+    ctx.beginPath();ctx.moveTo(xe2-2.5,subY+lH2-6);ctx.lineTo(xe2+2.5,subY+lH2-6);ctx.lineTo(xe2,subY+lH2);ctx.fill();
+  }
+
+  // H-field loops (I(z) is roughly out of phase with V(z); on a matched line
+  // |I|/Z0 has the same shape as |V|. We use the I envelope for shape and keep
+  // loops always visible so students can SEE H alongside E.)
+  for(var hi2=0;hi2<10;hi2++){
+    var frac6=(hi2+0.5)/10, xh2=sX+frac6*sW;
+    var iPt=Ipts[Math.round(frac6*(n-1))], a4=iPt?iPt.Im/maxI:0.5;
+    var op4=Math.min(0.85, 0.30+a4*0.55);
+    var rx4=8+a4*22;
+    ctx.strokeStyle='rgba(109,77,199,'+op4.toFixed(3)+')'; ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.ellipse(xh2,gY2+4,rx4,7,0,Math.PI,2*Math.PI);ctx.stroke();
+    // circulation arrow (H direction)
+    ctx.fillStyle='rgba(109,77,199,'+op4.toFixed(3)+')';
+    ctx.beginPath();
+    ctx.moveTo(xh2-rx4,gY2+4);
+    ctx.lineTo(xh2-rx4+4,gY2+1);
+    ctx.lineTo(xh2-rx4+4,gY2+7);
+    ctx.fill();
+  }
+
+  ctx.font='9px Courier New'; ctx.textAlign='left';
+  ctx.fillStyle='rgba(29,93,168,0.5)'; ctx.fillText('\u2195 E-field (amplitude \u221d V(z))',sX,CH-42);
+  ctx.fillStyle='rgba(109,77,199,0.5)'; ctx.fillText('\u21ba H-field loops',sX,CH-28);
+  ctx.fillStyle='rgba(181,117,10,0.7)'; ctx.fillText('-- |V(z)| envelope  |  \u03bbg='+lam.toFixed(1)+'mm',sX,CH-14);
+  ctx.fillStyle='rgba(30,138,82,0.6)'; ctx.fillText('.. |I(z)| envelope',sX+320,CH-14);
+  ctx.fillStyle='#a0c0d8'; ctx.font='bold 11px Courier New'; ctx.textAlign='right';
+  ctx.fillText('f = '+fGHz.toFixed(3)+' GHz', CW-12, 18);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SMITH CHART
+═══════════════════════════════════════════════════════ */
+function drawSmith(locus, op, ZLg, markers, z0){
+  var svg = document.getElementById('smithsvg');
+  svg.setAttribute('viewBox','0 0 300 300'); svg.style.height='220px';
+  svg.innerHTML = '';
+  var NS='http://www.w3.org/2000/svg', cx=150, cy=150, R=135;
+  var ts=function(gr,gi){return {x:cx+gr*R, y:cy-gi*R};};
+
+  var defs=document.createElementNS(NS,'defs');
+  var cp=document.createElementNS(NS,'clipPath'); cp.setAttribute('id','sc');
+  var cc=document.createElementNS(NS,'circle'); cc.setAttribute('cx',cx); cc.setAttribute('cy',cy); cc.setAttribute('r',R+1);
+  cp.appendChild(cc); defs.appendChild(cp); svg.appendChild(defs);
+
+  var bg=document.createElementNS(NS,'circle');
+  bg.setAttribute('cx',cx); bg.setAttribute('cy',cy); bg.setAttribute('r',R); bg.setAttribute('fill','#ffffff'); svg.appendChild(bg);
+
+  [0,0.2,0.5,1,2,5].forEach(function(r){
+    var cr=R/(r+1), cxr=cx+R-cr;
+    var el=document.createElementNS(NS,'circle');
+    el.setAttribute('cx',cxr); el.setAttribute('cy',cy); el.setAttribute('r',cr);
+    el.setAttribute('fill','none'); el.setAttribute('stroke','#d7dbe4'); el.setAttribute('stroke-width','0.8');
+    el.setAttribute('clip-path','url(#sc)'); svg.appendChild(el);
+    if(r>0){var t=document.createElementNS(NS,'text');t.setAttribute('x',cxr+cr-2);t.setAttribute('y',cy-3);t.setAttribute('fill','#8b93a5');t.setAttribute('font-size','8');t.setAttribute('text-anchor','end');t.setAttribute('font-family','Courier New');t.textContent=r;svg.appendChild(t);}
+  });
+  [0.2,0.5,1,2,5,-0.2,-0.5,-1,-2,-5].forEach(function(x){
+    var cr=R/Math.abs(x), cyr=cy-Math.sign(x)*cr;
+    var el=document.createElementNS(NS,'circle');
+    el.setAttribute('cx',cx+R); el.setAttribute('cy',cyr.toFixed(1)); el.setAttribute('r',cr.toFixed(1));
+    el.setAttribute('fill','none'); el.setAttribute('stroke','#d7dbe4'); el.setAttribute('stroke-width','0.5');
+    el.setAttribute('clip-path','url(#sc)'); svg.appendChild(el);
+  });
+  var ax=document.createElementNS(NS,'line');
+  ax.setAttribute('x1',cx-R); ax.setAttribute('y1',cy); ax.setAttribute('x2',cx+R); ax.setAttribute('y2',cy);
+  ax.setAttribute('stroke','#c5cbd8'); ax.setAttribute('stroke-width','0.6'); svg.appendChild(ax);
+  var uc=document.createElementNS(NS,'circle');
+  uc.setAttribute('cx',cx); uc.setAttribute('cy',cy); uc.setAttribute('r',R);
+  uc.setAttribute('fill','none'); uc.setAttribute('stroke','#9aa3ba'); uc.setAttribute('stroke-width','1.5'); svg.appendChild(uc);
+
+  if(locus&&locus.length>1){
+    var d=locus.map(function(pt,i){var p2=ts(pt[0],pt[1]);return(i===0?'M':'L')+p2.x.toFixed(1)+','+p2.y.toFixed(1);}).join(' ');
+    var pe=document.createElementNS(NS,'path');
+    pe.setAttribute('d',d); pe.setAttribute('fill','none'); pe.setAttribute('stroke','#8b5cf6'); pe.setAttribute('stroke-width','2'); pe.setAttribute('opacity','0.85'); svg.appendChild(pe);
+  }
+  function dot(gr,gi,fill){
+    if(Math.abs(gr)>1.05||Math.abs(gi)>1.05)return;
+    var pt=ts(gr,gi);
+    var c2=document.createElementNS(NS,'circle');
+    c2.setAttribute('cx',pt.x.toFixed(1)); c2.setAttribute('cy',pt.y.toFixed(1));
+    c2.setAttribute('r','6'); c2.setAttribute('fill',fill); c2.setAttribute('stroke','#ffffff'); c2.setAttribute('stroke-width','1.8'); svg.appendChild(c2);
+  }
+  if(markers && markers.length){
+    markers.forEach(function(m){ dot(m.re, m.im, m.color); });
+    var legendEl=document.getElementById('smithLegend');
+    if(legendEl){
+      legendEl.innerHTML = markers.map(function(m){
+        return '<div class="sm-row"><span class="sm-dot" style="background:'+m.color+'"></span><span class="sm-lbl">'+m.label+'</span></div>';
+      }).join('') + '<div class="sm-z0">Z\u2080 = '+(+(z0||50)).toFixed(2)+' \u03a9</div>';
+    }
+  } else {
+    if(ZLg) dot(ZLg[0],ZLg[1],'#d97706');
+    if(op) dot(op[0],op[1],'#0284c7');
+    var lt=document.createElementNS(NS,'text');
+    lt.setAttribute('x',cx); lt.setAttribute('y',cy+R+13); lt.setAttribute('text-anchor','middle');
+    lt.setAttribute('fill','#8b93a5'); lt.setAttribute('font-size','8'); lt.setAttribute('font-family','Courier New');
+    lt.textContent='\u25cf ZL (amber)  \u25cf Zin (blue)  \u2014 locus (purple)'; svg.appendChild(lt);
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   EQUIVALENT CIRCUIT DRAWING
+   Draws a complete labeled schematic with computed values
+═══════════════════════════════════════════════════════ */
+function drawEquivCircuit(mode, params){
+  var svg = document.getElementById('equiv-svg');
+  var valsDiv = document.getElementById('equiv-vals');
+  if(!svg) return;
+  svg.innerHTML = '';
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, txt){
+    var e = document.createElementNS(NS, tag);
+    Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+    if(txt !== undefined) e.textContent = txt;
+    svg.appendChild(e); return e;
+  }
+  function line(x1,y1,x2,y2,col,w){ el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:col||'#64748b','stroke-width':w||1.5}); }
+  function label(x,y,txt,col,sz,anchor){ el('text',{x:x,y:y,fill:col||'#5b6478','font-size':sz||9,'text-anchor':anchor||'middle','font-family':'Courier New,monospace'},txt); }
+  function resistor(x,y,lbl,val){
+    // Zigzag resistor symbol
+    el('rect',{x:x,y:y-12,width:40,height:24,rx:3,fill:'rgba(194,59,59,0.08)',stroke:'#c23b3b','stroke-width':1});
+    label(x+20,y+4,lbl,'#c23b3b',9,'middle');
+    label(x+20,y+18,val,'#c23b3b',8,'middle');
+  }
+  function inductor(x,y,lbl,val){
+    // Coil symbol - 4 arcs
+    var path='M'+x+','+y;
+    for(var i=0;i<4;i++){ path+=' Q'+(x+i*14+7)+','+(y-14)+' '+(x+(i+1)*14)+','+y; }
+    el('path',{d:path,fill:'none',stroke:'#6d4dc7','stroke-width':1.8});
+    label(x+28,y+14,lbl,'#6d4dc7',9,'middle');
+    label(x+28,y+23,val,'#6d4dc7',8,'middle');
+  }
+  function capacitor(x,y,lbl,val,fs){
+    fs=fs||1;
+    line(x,y-16,x,y-4,'#1d5da8',2.6);
+    line(x-13,y-4,x+13,y-4,'#1d5da8',3);
+    line(x-13,y+4,x+13,y+4,'#1d5da8',3);
+    line(x,y+4,x,y+16,'#1d5da8',2.6);
+    label(x+22*fs,y,lbl,'#1d5da8',14*fs,'start');
+    label(x+22*fs,y+16,val,'#1d5da8',12.5*fs,'start');
+  }
+  function port(x,y,lbl){
+    el('circle',{cx:x,cy:y,r:6,fill:'none',stroke:'#b5750a','stroke-width':2});
+    label(x,y+23,lbl,'#b5750a',14,'middle');
+  }
+
+  if(mode === 'tline'){
+    // Transmission line equiv: distributed LC + load
+    var Z0=params.Z0, er=params.er, len=params.len, fMHz=params.fCenter*1e3;
+    var c0=3e8;
+    // Per-unit-length: L' = Z0*sqrt(er)/c0, C' = sqrt(er)/(Z0*c0)
+    var Lpul = Z0*Math.sqrt(er)/c0 * 1e9;  // nH/m
+    var Cpul = Math.sqrt(er)/(Z0*c0) * 1e12; // pF/m
+    var Ltotal = Lpul * len*1e-3;  // nH
+    var Ctotal = Cpul * len*1e-3;  // pF
+    // ZL
+    var ZLr=params.ZLr, ZLi=params.ZLi;
+    var ZLmag=Math.sqrt(ZLr*ZLr+ZLi*ZLi);
+    document.getElementById('equiv-title').textContent = 'Equivalent Circuit — Transmission Line (lumped approximation, valid for L < \u03bb/4)';
+    // Draw distributed model with 3 LC sections
+    var sy=60;
+    port(14,sy,'P1'); line(19,sy,50,sy,'#63708a');
+    // 3 LC sections
+    var sects=3;
+    for(var i=0;i<sects;i++){
+      var sx=50+i*160;
+      inductor(sx,sy,'L\u2032\u0394z',(Ltotal/sects).toFixed(2)+'nH');
+      line(sx+56,sy,sx+90,sy,'#63708a');
+      // shunt capacitor
+      line(sx+90,sy,sx+90,sy+16,'#63708a',1.2);
+      capacitor(sx+90,sy+32,'C\u2032\u0394z',(Ctotal/sects).toFixed(2)+'pF');
+      line(sx+90,sy+48,sx+90,sy+64,'#63708a',1.2);
+      el('line',{x1:50,y1:sy+64,x2:550,y2:sy+64,stroke:'#63708a','stroke-width':0.7,'stroke-dasharray':'3,3'});
+      if(i<sects-1) line(sx+90,sy,sx+160,sy,'#63708a');
+    }
+    // ZL box
+    var lx=530;
+    el('rect',{x:lx,y:sy-16,width:48,height:32,rx:4,fill:'rgba(181,117,10,.09)',stroke:'#b5750a','stroke-width':1});
+    label(lx+24,sy+4,'Z_L','#b5750a',9,'middle');
+    label(lx+24,sy+17,ZLr.toFixed(0)+'\u00b1j'+Math.abs(ZLi).toFixed(0),'#b5750a',8,'middle');
+    port(614,sy,'P2'); line(578,sy,609,sy,'#63708a');
+    line(lx+48,sy,lx+58,sy,'#63708a');
+    valsDiv.innerHTML = 'L\u2032 = '+Lpul.toFixed(2)+' nH/m &nbsp;|&nbsp; C\u2032 = '+Cpul.toFixed(2)+' pF/m &nbsp;|&nbsp; Total L = '+Ltotal.toFixed(2)+' nH &nbsp;|&nbsp; Total C = '+Ctotal.toFixed(2)+' pF &nbsp;|&nbsp; Z\u2080 = \u221a(L\u2032/C\u2032) = '+Z0.toFixed(1)+'\u03a9';
+
+  } else if(mode === 'ms'){
+    // Microstrip: pi-network model (low-frequency lumped equiv)
+    var Z0=params.Z0, er=params.eref, L=params.len*1e-3;
+    var Lpul = Z0*Math.sqrt(er)/3e8; // H/m
+    var Cpul = Math.sqrt(er)/(Z0*3e8); // F/m
+    var Ls = Lpul*L*1e9;   // nH (series inductance)
+    var Cp = Cpul*L/2*1e12; // pF (half capacitance for pi model)
+    var mu0=4e-7*Math.PI, Rs=Math.sqrt(Math.PI*params.fCenter*1e9*mu0/5.8e7);
+    var Rs_ohm = Rs/(params.W*1e-3) * L; // Ohm (series conductor resistance)
+    document.getElementById('equiv-title').textContent = 'Equivalent Circuit — Microstrip \u03c0-network (valid for L < \u03bb_g/4)';
+    var sy=70;
+    port(14,sy,'P1'); line(19,sy,55,sy,'#63708a');
+    // Shunt C1 at port 1
+    line(55,sy,55,sy+16,'#63708a',1.2);
+    capacitor(55,sy+32,'C/2',Cp.toFixed(2)+'pF');
+    line(55,sy+48,55,sy+62,'#63708a',1.2);
+    el('line',{x1:14,y1:sy+62,x2:686,y2:sy+62,stroke:'#1e2a40','stroke-width':0.8,'stroke-dasharray':'3,3'});
+    // Series R
+    line(55,sy,90,sy,'#63708a');
+    resistor(90,sy,'R\u209b',Rs_ohm.toFixed(3)+'\u03a9');
+    line(130,sy,165,sy,'#63708a');
+    // Series L
+    inductor(165,sy,'L\u209b',Ls.toFixed(2)+'nH');
+    line(221,sy,270,sy,'#63708a');
+    // Shunt C2 at port 2
+    line(270,sy,270,sy+16,'#63708a',1.2);
+    capacitor(270,sy+32,'C/2',Cp.toFixed(2)+'pF');
+    line(270,sy+48,270,sy+62,'#63708a',1.2);
+    line(270,sy,320,sy,'#63708a');
+    port(325,sy,'P2');
+    // Ground ref
+    label(350,sy+70,'Reference (ground plane)','#63708a',8,'start');
+    valsDiv.innerHTML = 'Series L = '+Ls.toFixed(3)+' nH &nbsp;|&nbsp; Series R = '+Rs_ohm.toFixed(4)+' \u03a9 &nbsp;|&nbsp; Shunt C (each) = '+Cp.toFixed(3)+' pF &nbsp;|&nbsp; \u03c0-network valid when L < \u03bbg/4 = '+(params.lambdaG/4).toFixed(2)+' mm';
+
+  } else if(mode === 'res'){
+    // Resonator: series RLC between ports, with coupling caps
+    var R=params.Req, L=params.Leq, C=params.Ceq, Cg=params.Cgap, f0=params.f0;
+    document.getElementById('equiv-title').textContent = '\u03bb/2 Resonator — Series RLC Equivalent (valid near f\u2080 = '+f0.toFixed(4)+' GHz)';
+    var sy=65;
+    port(18,sy,'P1'); line(23,sy,55,sy,'#63708a');
+    // Left coupling cap Cg
+    line(55,sy,55,sy-16,'#63708a',1.2);
+    line(43,sy-16,67,sy-16,'#1d5da8',2.5);
+    line(43,sy-24,67,sy-24,'#1d5da8',2.5);
+    line(55,sy-24,55,sy-38,'#63708a',1.2);
+    label(78,sy-20,'C_g','#1d5da8',9,'start');
+    label(78,sy-9,Cg.toFixed(2)+'fF','#1d5da8',8,'start');
+    line(55,sy-38,120,sy-38,'#63708a');
+    // Series R
+    resistor(120,sy-50,'R_eq',R.toFixed(4)+'\u03a9');
+    line(160,sy-38,195,sy-38,'#63708a');
+    // Series L
+    inductor(195,sy-38,'L_eq',L.toFixed(3)+'nH');
+    line(251,sy-38,285,sy-38,'#63708a');
+    // Series C_eq
+    line(285,sy-38,285,sy-54,'#63708a',1.2);
+    line(273,sy-54,297,sy-54,'#1d5da8',2.5);
+    line(273,sy-62,297,sy-62,'#1d5da8',2.5);
+    line(285,sy-62,285,sy-80,'#63708a',1.2);
+    label(308,sy-58,'C_eq','#1d5da8',9,'start');
+    label(308,sy-47,C.toFixed(0)+'fF','#1d5da8',8,'start');
+    line(285,sy-80,380,sy-80,'#63708a');
+    label(320,sy-90,'Resonator body (series RLC)','#63708a',8,'middle');
+    // Back down
+    line(380,sy-80,380,sy-38,'#63708a');
+    line(380,sy-38,430,sy-38,'#63708a');
+    // Right coupling cap Cg
+    line(430,sy-38,430,sy-54,'#63708a',1.2);
+    line(418,sy-54,442,sy-54,'#1d5da8',2.5);
+    line(418,sy-62,442,sy-62,'#1d5da8',2.5);
+    line(430,sy-62,430,sy-78,'#63708a',1.2);
+    label(453,sy-58,'C_g','#1d5da8',9,'start');
+    label(453,sy-47,Cg.toFixed(2)+'fF','#1d5da8',8,'start');
+    line(430,sy-38,490,sy-38,'#63708a');
+    line(490,sy-38,490,sy,'#63708a');
+    line(490,sy,530,sy,'#63708a');
+    port(535,sy,'P2');
+    // Ground rail
+    line(18,sy,18,sy+30,'#63708a',0.8); line(535,sy,535,sy+30,'#63708a',0.8);
+    el('line',{x1:18,y1:sy+30,x2:535,y2:sy+30,stroke:'#63708a','stroke-width':0.8,'stroke-dasharray':'3,3'});
+    label(276,sy+42,'Reference ground','#63708a',8,'middle');
+    valsDiv.innerHTML = 'R_eq = '+R.toFixed(5)+' \u03a9 &nbsp;|&nbsp; L_eq = '+L.toFixed(3)+' nH &nbsp;|&nbsp; C_eq = '+C.toFixed(1)+' fF &nbsp;|&nbsp; C_gap = '+Cg.toFixed(2)+' fF &nbsp;|&nbsp; f\u2080 = '+f0.toFixed(4)+' GHz &nbsp;|&nbsp; Q_u = '+params.Qu.toFixed(0)+' &nbsp;|&nbsp; Q_L = '+params.QL.toFixed(1);
+
+  } else if(mode === 'filt'){
+    // N-pole coupled-ring BPF: chain of shunt RLC (ring) resonators linked by series coupling caps
+    var N=params.N;
+    var fsScale = N>=3 ? 0.8 : 1; // N=3 packs one more resonator into the same width, so labels scale down slightly to avoid crowding
+    function capacitorH(x,y,lbl,val){
+      line(x-17,y,x-4,y,'#1d5da8',2.6);
+      line(x-4,y-14,x-4,y+14,'#1d5da8',3);
+      line(x+4,y-14,x+4,y+14,'#1d5da8',3);
+      line(x+4,y,x+17,y,'#1d5da8',2.6);
+      label(x,y-27,lbl,'#1d5da8',14*fsScale,'middle');
+      label(x,y+32,val,'#1d5da8',12.5*fsScale,'middle');
+    }
+    function inductorV(x,y0,y1,lbl,val){
+      var h=y1-y0, n=4, seg=h/n, path='M'+x+','+y0;
+      for(var i=0;i<n;i++){ path+=' Q'+(x+15)+','+(y0+i*seg+seg/2)+' '+x+','+(y0+(i+1)*seg); }
+      el('path',{d:path,fill:'none',stroke:'#6d4dc7','stroke-width':2.4});
+      label(x-34*fsScale,(y0+y1)/2,lbl,'#6d4dc7',14*fsScale,'middle');
+      label(x-34*fsScale,(y0+y1)/2+16,val,'#6d4dc7',12.5*fsScale,'middle');
+    }
+    var Leq=params.Leq, Ceq=params.Ceq, Cio=params.Cio, C12=params.C12, f0=params.f0;
+    document.getElementById('equiv-title').textContent = N+'-pole Coupled-Ring BPF';
+    var gChips = '';
+    (params.g||[]).forEach(function(gv, i){
+      if(i===0) return; // g[0] is unused (1-indexed prototype array); skip
+      gChips += '<span class="chip g">g'+i+' = '+gv.toFixed(4)+'</span>';
+    });
+    document.getElementById('equiv-subtitle').innerHTML =
+      '<span class="eq-desc">Shunt resonators, capacitive coupling</span>'
+      + '<span class="chip">f\u2080 = '+f0.toFixed(4)+' GHz</span>'
+      + gChips;
+    var sy=42, gy=140, x0=45, x1=655, seg=(x1-x0)/(N+1);
+    port(18,sy,'P1'); line(23,sy,x0,sy);
+    var lastX=x0;
+    for(var k=0;k<=N;k++){
+      var capX=x0+seg*k+seg/2;
+      var isEnd=(k===0||k===N);
+      line(lastX,sy,capX-16,sy);
+      capacitorH(capX,sy,isEnd?'C_io':'C_'+k+(k+1),(isEnd?Cio:C12).toFixed(2)+'fF');
+      lastX=capX+16;
+      if(k<N){
+        var resX=x0+seg*(k+1);
+        line(lastX,sy,resX,sy);
+        lastX=resX;
+        line(resX,sy,resX,sy+12);
+        var br=20*fsScale;
+        line(resX-br,sy+12,resX+br,sy+12);
+        inductorV(resX-br,sy+12,gy-6,'L_eq',Leq.toFixed(3)+'nH');
+        capacitor(resX+br,(sy+12+gy-6)/2,'C_eq',Ceq.toFixed(1)+'fF',fsScale);
+        line(resX-br,gy-6,resX-br,gy); line(resX+br,gy-6,resX+br,gy);
+        label(resX,sy-17,'Ring '+(k+1),'#1d5da8',14*fsScale,'middle');
+      }
+    }
+    line(lastX,sy,x1+10,sy); port(x1+30,sy,'P2');
+    el('line',{x1:22,y1:gy,x2:x1+10,y2:gy,stroke:'#63708a','stroke-width':1,'stroke-dasharray':'3,3'});
+    label((x0+x1)/2,gy+20,'Reference ground','#63708a',12,'middle');
+    valsDiv.innerHTML = [
+      ['N', N],
+      ['L_eq', Leq.toFixed(3)+' nH'],
+      ['C_eq', Ceq.toFixed(1)+' fF'],
+      ['C_io', Cio.toFixed(2)+' fF'],
+      ['C_12', C12.toFixed(2)+' fF'],
+      ['k\u2081\u2082', params.k12.toFixed(4)],
+      ['Q_u', params.Qu.toFixed(0)],
+      ['Q_ext', params.Qe.toFixed(1)],
+      ['BW', params.BW+' MHz']
+    ].map(function(kv){
+      return '<div class="ev"><div class="ev-l">'+kv[0]+'</div><div class="ev-v">'+kv[1]+'</div></div>';
+    }).join('');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   PANEL MANAGEMENT (results panels are always visible now —
+   these just keep older calls from runSparam/runField safe)
+═══════════════════════════════════════════════════════ */
+function showRP(id){
+  var el=document.getElementById(id); if(el) el.classList.add('on');
+  var idle=document.getElementById('idle'); if(idle) idle.style.display='none';
+}
+function closeRP(id){
+  var el=document.getElementById(id); if(el) el.classList.remove('on');
+}
+var IDLE_IDS=['idle-sparam','idle-vswr','idle-smith','idle-equiv','idle-field'];
+function showIdle(){
+  IDLE_IDS.forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.remove('hide'); });
+}
+function hideIdle(){
+  IDLE_IDS.forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.add('hide'); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOP CONTROLS — unified run, reset, field playback
+═══════════════════════════════════════════════════════ */
+var hasRunOnce = false;
+
+/* FIX (P1): fired on every parameter edit (was calcLive() directly before).
+   Still recalculates the Live Design Values / geometry live, same as before,
+   but ALSO flags the S-Parameters/VSWR/Smith/Equivalent-Circuit/Field results
+   as stale once a simulation has already been run — previously, changing an
+   input left the OLD "✓ Simulation Completed Successfully <old timestamp>"
+   message (and the old charts) on screen with no indication they no longer
+   match the current parameters. */
+function onParamEdited(){
+  calcLive();
+  markResultsStale();
+}
+function markResultsStale(){
+  if(!hasRunOnce) return;
+  var st = document.getElementById('simStatus');
+  if(st.dataset.state === 'stale') return; // already flagged, avoid re-triggering layout
+  st.innerHTML = ICON_WARN+' Parameters changed \u2014 click Run Simulation to update results';
+  st.style.color = 'var(--amber)';
+  st.dataset.state = 'stale';
+  st.classList.add('show');
+  syncPanelHeights();
+}
+
+function runSimulation(){
+  var p = getP();
+  if(!p){
+    // No simulation model for this module (e.g. "Why 50 Ω?" reference page has
+    // no dpFields/design content) — don't claim a fake success.
+    var st0 = document.getElementById('simStatus');
+    st0.classList.remove('show');
+    st0.innerHTML = ICON_WARN+' This module has no interactive simulation — nothing to run.';
+    st0.style.color = 'var(--muted)';
+    st0.dataset.state = 'none';
+    st0.classList.add('show');
+    syncPanelHeights();
+    return;
+  }
+  runSparam();
+  runField();
+  hideIdle();
+  var st = document.getElementById('simStatus');
+  st.style.color = ''; // restore default (success) color in case a stale/warning state set it previously
+  st.innerHTML = ICON_CHECK+' Simulation Completed Successfully <span class="ts" id="simTs"></span>';
+  st.dataset.state = 'success';
+  st.classList.add('show');
+  hasRunOnce = true;
+  var now = new Date();
+  document.getElementById('simTs').textContent = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  syncPanelHeights(); // the status line just appeared, changing panel-params' height
+}
+
+/* FIX (P1): Reset previously only restored input field values and hid the
+   status text — the S-Parameter/VSWR charts, Smith chart, Equivalent Circuit
+   diagram and Field Distribution canvas were left showing whatever the LAST
+   run had produced, now silently mismatched against the just-reset (default)
+   parameters. Reset now explicitly clears all of that so nothing stale is
+   left on screen implying it reflects the (reset) design. */
+function clearAllResults(){
+  Object.keys(CH).forEach(function(id){ if(CH[id]){ try{CH[id].destroy();}catch(e){} delete CH[id]; } });
+  var s = document.getElementById('smithsvg'); if(s) s.innerHTML='';
+  var e = document.getElementById('equiv-svg'); if(e) e.innerHTML='';
+  var ev = document.getElementById('equiv-vals'); if(ev) ev.innerHTML='';
+  var fc = document.getElementById('fdcvs');
+  if(fc) fc.innerHTML='';
+  hasRunOnce = false;
+  showIdle();
+}
+
+function resetDesign(){
+  var mod = MODS[curMod];
+  (mod.dpFields||[]).forEach(function(f){
+    var el = document.getElementById(f.id);
+    if(el) el.value = f.val;
+  });
+  clearAllResults();
+  var st = document.getElementById('simStatus');
+  st.classList.remove('show');
+  st.style.color = '';
+  st.dataset.state = '';
+  calcLive();
+}
+
+var fdPlaying=false, fdPlayTimer=null;
+function toggleFdPlay(){
+  fdPlaying=!fdPlaying;
+  var btn=document.getElementById('fdPlayBtn');
+  var PAUSE_SVG='<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  var PLAY_SVG='<svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"/></svg>';
+  if(fdPlaying){
+    btn.innerHTML=PAUSE_SVG;
+    fdPlayTimer=setInterval(function(){
+      var rng=document.getElementById('fdrng');
+      var v=(parseInt(rng.value,10)+2)%101;
+      rng.value=v;
+      rng.dispatchEvent(new Event('input'));
+    },120);
+  } else {
+    btn.innerHTML=PLAY_SVG;
+    clearInterval(fdPlayTimer);
+  }
+}
+function fdStep(){
+  var rng=document.getElementById('fdrng');
+  rng.value=(parseInt(rng.value,10)+5)%101;
+  rng.dispatchEvent(new Event('input'));
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════
+   RING RESONATOR — CONTENT FUNCTIONS
+═══════════════════════════════════════════════════════ */
+function ringConcept(){
+  return '<div class="shero"><h1>Ring Resonator</h1>'
+    + '<p>A ring resonator is a closed microstrip loop. It resonates when its mean circumference equals an integer multiple of the guided wavelength. Unlike the linear \u03bb/2 resonator it has <em>no open ends</em> \u2014 no fringing correction is needed.</p></div>'
+    + '<div class="sh2">Why a ring?</div>'
+    + '<div class="twocol">'
+    + '<div class="cc"><h3>No open-end correction <span class="tag tb">advantage</span></h3><p>The linear \u03bb/2 resonator requires open-end correction \u0394L because fringing fields extend beyond the strip ends. The ring is a <em>closed loop</em> with no ends, so the resonant frequency formula is exact.</p><div class="kb" style="margin-top:8px">f\u2099 = n\u00b7c\u2080 / (2\u03c0R\u00b7\u221a\u03b5_r,eff) &nbsp; n=1,2,3\u2026</div></div>'
+    + '<div class="cc"><h3>Multiple harmonics <span class="tag tp">property</span></h3><p>The ring supports multiple equally-spaced resonances: f\u2082=2f\u2081, f\u2083=3f\u2081. Each mode has n standing-wave cycles around the circumference. The n=1 mode is the fundamental with one full wavelength around the ring.</p></div>'
+    + '</div>'
+    + '<div class="sh2">Standing wave on the ring (n=1)</div>'
+    + '<div class="cc">'
+    + '<svg viewBox="0 0 420 170" style="width:100%;margin:8px 0;background:#040810;border-radius:6px">'
+    + '<circle cx="210" cy="85" r="58" fill="none" stroke="rgba(29,93,168,0.12)" stroke-width="18"/>'
+    + '<circle cx="210" cy="85" r="58" fill="none" stroke="#1d5da8" stroke-width="1.5"/>'
+    + '<circle cx="210" cy="85" r="44" fill="none" stroke="#1d5da8" stroke-width="1.5"/>'
+    + '<path d="M210,27 Q274,30 283,72 Q292,85 283,98 Q274,140 210,143 Q146,140 137,98 Q128,85 137,72 Q146,30 210,27" fill="none" stroke="rgba(109,77,199,0.8)" stroke-width="2.5" stroke-dasharray="4,2"/>'
+    + '<text x="210" y="20" fill="#6d4dc7" font-size="9" text-anchor="middle" font-family="Courier New">V_max</text>'
+    + '<text x="210" y="162" fill="#6d4dc7" font-size="9" text-anchor="middle" font-family="Courier New">V_max</text>'
+    + '<text x="355" y="89" fill="#1e8a52" font-size="9" text-anchor="start" font-family="Courier New">I_max</text>'
+    + '<text x="65" y="89" fill="#1e8a52" font-size="9" text-anchor="end" font-family="Courier New">I_max</text>'
+    + '<line x1="210" y1="9" x2="210" y2="27" stroke="#b5750a" stroke-width="5"/>'
+    + '<text x="210" y="7" fill="#b5750a" font-size="8" text-anchor="middle" font-family="Courier New">P1 (g)</text>'
+    + '<line x1="210" y1="143" x2="210" y2="161" stroke="#b5750a" stroke-width="5"/>'
+    + '<text x="210" y="169" fill="#b5750a" font-size="8" text-anchor="middle" font-family="Courier New">P2 (g)</text>'
+    + '<line x1="210" y1="85" x2="268" y2="85" stroke="rgba(96,160,200,0.5)" stroke-width="0.8"/>'
+    + '<text x="242" y="81" fill="rgba(96,160,200,0.7)" font-size="8" font-family="Courier New">R</text>'
+    + '<circle cx="210" cy="85" r="2" fill="#1d5da8"/>'
+    + '<text x="90" y="87" fill="#63708a" font-size="8" font-family="Courier New">2\u03c0R = \u03bbg</text>'
+    + '</svg>'
+    + '<p style="font-size:11px;color:var(--muted)">One full wavelength fits around the ring. Feed lines couple at the voltage maxima (top and bottom). Coupling gap g sets Q_ext.</p></div>'
+    + '<div class="sh2">Comparison: Linear vs Ring</div>'
+    + '<div class="twocol">'
+    + '<div class="cc"><h3>Linear \u03bb/2 <span class="tag ta">open ends</span></h3><ul><li>Length \u2248 \u03bbg/2 + fringing correction \u0394L</li><li>Simple cascade filter topology</li><li>Compact rectangular footprint</li><li>Fringing shifts frequency slightly</li></ul></div>'
+    + '<div class="cc"><h3>Ring resonator <span class="tag tg">closed loop</span></h3><ul><li>Circumference = \u03bbg (exact, no correction)</li><li>Harmonics at exact multiples of f\u2081</li><li>Standard for \u03b5_r measurement</li><li>Slightly larger footprint (circular)</li></ul></div>'
+    + '</div>'
+    + '<div class="ib">Application: Because f\u2080 depends directly on \u03b5_r,eff with no correction factors, the ring resonator is the standard structure for measuring the dielectric permittivity of PCB substrates in research labs.</div>';
+}
+
+function ringFormula(){
+  return '<div class="shero" style="border-left-color:var(--purple)"><h1>Ring Resonator \u2014 Formulas</h1></div>'
+    + '<div class="sh2">1 \u2014 Resonant frequencies</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tb">f_n</span> n-th mode of the ring</div>'
+    + '<div class="feq">f<sub>n</sub> = n\u00b7c\u2080 / (2\u03c0\u00b7R\u00b7\u221a\u03b5<sub>r,eff</sub>)<br><br>R = n\u00b7\u03bb<sub>g</sub> / (2\u03c0)</div>'
+    + '<div class="fdsc">R is the mean radius (centre-line of strip). No \u0394L correction. Modes are equally spaced: f\u2082=2f\u2081, f\u2083=3f\u2081.</div>'
+    + '<div class="vgrid"><div class="vi"><div class="vs">R</div><div class="vd">Mean radius (mm)</div></div>'
+    + '<div class="vi"><div class="vs">R_inner = R\u2212W/2</div><div class="vd">Inner edge</div></div>'
+    + '<div class="vi"><div class="vs">R_outer = R+W/2</div><div class="vd">Outer edge</div></div></div></div>'
+    + '<div class="sh2">2 \u2014 Q-factors</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tg">Q_u, Q_ext</span></div>'
+    + '<div class="feq">Q<sub>u</sub> = \u03c0 / [(\u03b1<sub>c</sub>+\u03b1<sub>d</sub>)\u00b72\u03c0R]<br><br>Q<sub>ext</sub> = \u03c0 / (2\u03c9\u2080\u00b7C<sub>gap</sub>\u00b7Z\u2080)<br><br>1/Q<sub>L</sub> = 1/Q<sub>u</sub> + 2/Q<sub>ext</sub></div>'
+    + '<div class="fdsc">Circumference 2\u03c0R replaces L_eff from the linear case. C_gap = \u03b5\u2080(1+\u03b5_r)/2\u00b7(W\u00b7t)/g.</div></div>'
+    + '<div class="sh2">3 \u2014 S-parameter response</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag ta">S\u2082\u2081</span> Lorentzian (same as linear resonator)</div>'
+    + '<div class="feq">S<sub>21</sub>(f) = (Q<sub>L</sub>/Q<sub>ext</sub>) / (1+j\u00b72Q<sub>L</sub>\u03b4)  &nbsp; \u03b4=(f\u2212f\u2080)/f\u2080</div></div>'
+    + '<div class="sh2">4 \u2014 Equivalent circuit</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tb">RLC</span> Series lumped equivalent near f\u2080</div>'
+    + '<div class="feq">L<sub>eq</sub> = Z\u2080/(\u03c0f\u2080)  &nbsp; C<sub>eq</sub> = 1/(\u03c9\u2080\u00b2L<sub>eq</sub>)  &nbsp; R<sub>eq</sub> = Z\u2080/Q<sub>u</sub></div></div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   RING FILTER — CONTENT FUNCTIONS
+═══════════════════════════════════════════════════════ */
+function curFiltN(){
+  var el = document.getElementById('dp-np');
+  var n = el ? Math.round(parseFloat(el.value)) : 2;
+  if(!n || isNaN(n)) n = 2;
+  return Math.max(2, Math.min(3, n));
+}
+
+function filtTopologySVG(N){
+  var W=520, H=160, cy=80, rO=44, rI=32, margin=90;
+  var spacing = N>1 ? (W-2*margin)/(N-1) : 0;
+  var colors=['#1d5da8','#6d4dc7','#1e8a52'];
+  var centers=[]; for(var i=0;i<N;i++) centers.push(N>1 ? margin+i*spacing : W/2);
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;margin:8px 0;background:#040810;border-radius:6px">';
+  for(var i=0;i<N;i++){
+    var cx=centers[i], col=colors[i%colors.length];
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rO+'" fill="none" stroke="'+col+'" stroke-opacity="0.1" stroke-width="14"/>';
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rO+'" fill="none" stroke="'+col+'" stroke-width="1.2"/>';
+    s+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rI+'" fill="none" stroke="'+col+'" stroke-width="1.2"/>';
+    s+='<text x="'+cx+'" y="'+(cy+4)+'" fill="'+col+'" font-size="8" text-anchor="middle" font-family="Courier New">Ring '+(i+1)+'</text>';
+  }
+  s+='<line x1="15" y1="'+cy+'" x2="'+(centers[0]-rO)+'" y2="'+cy+'" stroke="#b5750a" stroke-width="4"/><text x="10" y="'+(cy-4)+'" fill="#b5750a" font-size="8" font-family="Courier New">P1</text>';
+  s+='<text x="'+(centers[0]-rO+4)+'" y="'+(cy-5)+'" fill="#c23b3b" font-size="8" font-family="Courier New">g_io</text>';
+  s+='<line x1="'+(centers[N-1]+rO)+'" y1="'+cy+'" x2="'+(W-15)+'" y2="'+cy+'" stroke="#b5750a" stroke-width="4"/><text x="'+(W-10)+'" y="'+(cy-4)+'" fill="#b5750a" font-size="8" text-anchor="end" font-family="Courier New">P2</text>';
+  s+='<text x="'+(centers[N-1]+rO-4)+'" y="'+(cy-5)+'" fill="#c23b3b" font-size="8" text-anchor="end" font-family="Courier New">g_io</text>';
+  for(var i=0;i<N-1;i++){
+    var gx1=centers[i]+rO, gx2=centers[i+1]-rO;
+    s+='<rect x="'+gx1+'" y="'+(cy-18)+'" width="'+(gx2-gx1)+'" height="36" rx="3" fill="rgba(30,138,82,.05)" stroke="rgba(30,138,82,.3)" stroke-width="0.8" stroke-dasharray="3,2"/>';
+    s+='<text x="'+((gx1+gx2)/2)+'" y="'+(cy+4)+'" fill="#1e8a52" font-size="8" text-anchor="middle" font-family="Courier New">g_'+(i+1)+(i+2)+'</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+function filtConcept(){
+  return '<div class="shero"><h1>Ring Resonator Bandpass Filter</h1>'
+    + '<p>A bandpass filter built from coupled ring resonators. Each ring stores energy at f\u2080; adjacent rings couple through proximity gaps. The number of rings (filter order N) sets the selectivity. The coupling gaps set the bandwidth and ripple.</p></div>'
+    + '<div class="ib">\u2139 Model accuracy: this tool uses closed-form Chebyshev prototype synthesis with a simplified parallel-plate approximation for gap coupling capacitance. It is meant for understanding design trends and rough sizing. For fabrication-ready dimensions, verify with full-wave EM simulation (HFSS / CST / Sonnet) \u2014 real coupled-line gap capacitance differs from the parallel-plate estimate.</div>'
+    + '<div class="sh2">Complete design flow</div>'
+    + '<div class="cc">'
+    + '<svg viewBox="0 0 600 60" style="width:100%;margin:8px 0;background:#040810;border-radius:6px">'
+    + '<defs><marker id="arh2" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="#1d5da8"/></marker></defs>'
+    + '<g transform="translate(8,12)">'
+    + '<rect x="0" y="0" width="80" height="34" rx="3" fill="rgba(29,93,168,.08)" stroke="#1d5da8" stroke-width="1"/><text x="40" y="13" fill="#1d5da8" font-size="8" text-anchor="middle" font-family="Courier New">Spec</text><text x="40" y="25" fill="rgba(29,93,168,0.5)" font-size="7" text-anchor="middle" font-family="Courier New">f0 BW N ripple</text>'
+    + '<line x1="80" y1="17" x2="104" y2="17" stroke="#1d5da8" stroke-width="1" marker-end="url(#arh2)"/>'
+    + '<rect x="104" y="0" width="80" height="34" rx="3" fill="rgba(109,77,199,.08)" stroke="#6d4dc7" stroke-width="1"/><text x="144" y="13" fill="#6d4dc7" font-size="8" text-anchor="middle" font-family="Courier New">Prototype</text><text x="144" y="25" fill="rgba(109,77,199,0.5)" font-size="7" text-anchor="middle" font-family="Courier New">g1 g2 gN+1</text>'
+    + '<line x1="184" y1="17" x2="208" y2="17" stroke="#1d5da8" stroke-width="1" marker-end="url(#arh2)"/>'
+    + '<rect x="208" y="0" width="80" height="34" rx="3" fill="rgba(181,117,10,.08)" stroke="#b5750a" stroke-width="1"/><text x="248" y="13" fill="#b5750a" font-size="8" text-anchor="middle" font-family="Courier New">Coupling</text><text x="248" y="25" fill="rgba(181,117,10,0.5)" font-size="7" text-anchor="middle" font-family="Courier New">Qe k12</text>'
+    + '<line x1="288" y1="17" x2="312" y2="17" stroke="#1d5da8" stroke-width="1" marker-end="url(#arh2)"/>'
+    + '<rect x="312" y="0" width="80" height="34" rx="3" fill="rgba(30,138,82,.08)" stroke="#1e8a52" stroke-width="1"/><text x="352" y="13" fill="#1e8a52" font-size="8" text-anchor="middle" font-family="Courier New">Geometry</text><text x="352" y="25" fill="rgba(30,138,82,0.5)" font-size="7" text-anchor="middle" font-family="Courier New">R g_io g_12</text>'
+    + '<line x1="392" y1="17" x2="416" y2="17" stroke="#1d5da8" stroke-width="1" marker-end="url(#arh2)"/>'
+    + '<rect x="416" y="0" width="80" height="34" rx="3" fill="rgba(194,59,59,.08)" stroke="#c23b3b" stroke-width="1"/><text x="456" y="13" fill="#c23b3b" font-size="8" text-anchor="middle" font-family="Courier New">S-params</text><text x="456" y="25" fill="rgba(194,59,59,0.5)" font-size="7" text-anchor="middle" font-family="Courier New">S21 S11 BW</text>'
+    + '</g></svg></div>'
+    + '<div class="sh2">Filter topology <span style="font-size:9px;color:var(--muted);font-weight:400">(N = '+curFiltN()+', updates with your Design tab setting)</span></div>'
+    + '<div class="cc">' + filtTopologySVG(curFiltN()) + '</div>'
+    + '<div class="sh2">Chebyshev g-values for common orders</div>'
+    + '<div class="cc"><table style="width:100%;border-collapse:collapse;font-size:11px">'
+    + '<tr style="border-bottom:1px solid var(--bdr)"><th style="text-align:left;padding:5px 8px;color:var(--muted);font-weight:400;font-size:9px;text-transform:uppercase">N</th><th style="padding:5px 8px;color:var(--muted);font-weight:400;font-size:9px;text-transform:uppercase">g\u2081</th><th style="padding:5px 8px;color:var(--muted);font-weight:400;font-size:9px;text-transform:uppercase">g\u2082</th><th style="padding:5px 8px;color:var(--muted);font-weight:400;font-size:9px;text-transform:uppercase">g\u2083</th><th style="padding:5px 8px;color:var(--muted);font-weight:400;font-size:9px;text-transform:uppercase">g\u2084</th></tr>'
+    + '<tr style="border-bottom:1px solid rgba(26,32,53,.5)"><td style="padding:5px 8px;font-family:var(--mono);color:var(--blue)">2</td><td style="padding:5px 8px;color:var(--txt)">1.4029</td><td style="padding:5px 8px;color:var(--txt)">0.7071</td><td style="padding:5px 8px;color:var(--txt)">1.9841</td><td style="padding:5px 8px;color:var(--muted)">\u2014</td></tr>'
+    + '<tr style="border-bottom:1px solid rgba(26,32,53,.5)"><td style="padding:5px 8px;font-family:var(--mono);color:var(--blue)">3</td><td style="padding:5px 8px;color:var(--txt)">1.5963</td><td style="padding:5px 8px;color:var(--txt)">1.0967</td><td style="padding:5px 8px;color:var(--txt)">1.5963</td><td style="padding:5px 8px;color:var(--txt)">1.0000</td></tr>'
+    + '</table></div>'
+    + '<div class="ib">0.5 dB Chebyshev. The Design tab computes g-values automatically for any N and ripple you enter.</div>';
+}
+
+function filtFormula(){
+  return '<div class="shero" style="border-left-color:var(--purple)"><h1>Ring Filter \u2014 Design Equations</h1></div>'
+    + '<div class="sh2">1 \u2014 Chebyshev g-values</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tb">g</span> Low-pass prototype</div>'
+    + '<div class="feq">\u03b2 = ln[coth(L<sub>Ar</sub>/17.37)],  \u03b3 = sinh(\u03b2/2N)<br>a<sub>k</sub> = sin[(2k\u22121)\u03c0/2N],  b<sub>k</sub> = \u03b3\u00b2+sin\u00b2(k\u03c0/N)<br>g<sub>1</sub> = 2a<sub>1</sub>/\u03b3,  g<sub>k+1</sub> = 4a<sub>k</sub>a<sub>k+1</sub>/(b<sub>k</sub>\u00b7g<sub>k</sub>)</div>'
+    + '<div class="fdsc">L_Ar = passband ripple (dB). N = filter order. Computed automatically in Design tab.</div></div>'
+    + '<div class="sh2">2 \u2014 Coupling coefficients</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tp">Q_e, k_ij</span> From fractional bandwidth FBW = BW/f\u2080</div>'
+    + '<div class="feq">Q<sub>e</sub> = g<sub>1</sub>/FBW<br>k<sub>i,i+1</sub> = FBW / \u221a(g<sub>i</sub>\u00b7g<sub>i+1</sub>)</div></div>'
+    + '<div class="sh2">3 \u2014 Physical dimensions</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag tg">gaps</span> From coupling to physical gap</div>'
+    + '<div class="feq">C<sub>io</sub> = \u03c0/(2\u03c9\u2080\u00b7Q<sub>e</sub>\u00b7Z\u2080)<br>C<sub>12</sub> = k<sub>12</sub>\u00b7C<sub>eq</sub><br>g = \u03b5\u2080(1+\u03b5_r)/2\u00b7(W\u00b7t)/C</div>'
+    + '<div class="fdsc">t = 35\u03bcm (1 oz copper). Inverts the parallel-plate capacitance model.</div></div>'
+    + '<div class="sh2">4 \u2014 Chebyshev S\u2082\u2081 response</div>'
+    + '<div class="fb"><div class="flbl"><span class="tag ta">S\u2082\u2081</span></div>'
+    + '<div class="feq">|S<sub>21</sub>|<sup>2</sup> = 1/[1+\u03b5\u00b2T<sub>N</sub>\u00b2(\u03a9)]  &nbsp; \u03a9=(1/FBW)(f/f\u2080\u2212f\u2080/f)</div></div>';
+}
+
+/* ═══════════════════════════════════════════════════════
+   RING RESONATOR — getP branch
+═══════════════════════════════════════════════════════ */
+function getRingP(){
+  var W=gv('dp-W')||3, h=gv('dp-h')||1.6, er=gv('dp-er')||4.4;
+  var tand=gv('dp-tand')||0.02, R=gv('dp-Rr')||10.91;
+  var g=gv('dp-gr')||0.3, Wf=gv('dp-Wf')||3, Lf=gv('dp-Lf')||10;
+  var rr=msZ0(W,h,er); var Z0=rr.Z0, eref=rr.eref;
+  var circ=2*Math.PI*R*1e-3; // circumference in m
+  var f0=3e8/(circ*Math.sqrt(eref))/1e9; // n=1 mode
+  var f2=2*f0, f3=3*f0;
+  var eps0=8.854e-12, t_metal=0.035e-3;
+  var Cgap=eps0*(1+er)/2*(W*1e-3)*t_metal/(g*1e-3)*1e15;
+  Cgap=Math.max(0.5,Cgap);
+  var om0=2*Math.PI*f0*1e9;
+  var Qe=Math.PI/(2*om0*(Cgap*1e-15)*Z0);
+  Qe=Math.max(5,Qe);
+  var mu0=4e-7*Math.PI, Rs=Math.sqrt(Math.PI*f0*1e9*mu0/5.8e7);
+  var ac=Rs/(Z0*W*1e-3), ad=Math.PI*f0*1e9*Math.sqrt(eref)/3e8*tand;
+  var Qu=Math.max(10,Math.PI/((ac+ad)*circ));
+  var QL=1/(1/Qu+2/Qe), BW=f0/QL*1e3;
+  var Leq=Z0/(Math.PI*f0*1e9)*1e9;
+  var Ceq=1/(Math.pow(2*Math.PI*f0*1e9,2)*(Leq*1e-9))*1e15;
+  var Zfeed=msZ0(Wf,h,er).Z0;
+  return {Z0:Z0,eref:eref,er:eref,erRaw:er,W:W,h:h,tand:tand,
+    R:R,circ:circ*1e3,g:g,Wf:Wf,Lf:Lf,
+    f0:f0,f2:f2,f3:f3,Cgap:Cgap,Qe:Qe,Qu:Qu,QL:QL,BW:BW,
+    Leq:Leq,Ceq:Ceq,Zfeed:Zfeed,ZLr:Z0,ZLi:0,len:circ*1e3};
+}
+
+/* ═══════════════════════════════════════════════════════
+   FILTER — getP branch (Chebyshev synthesis)
+═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   VERIFIED CORRECT: Chebyshev (equal-ripple) low-pass prototype
+   g-value recurrence — Pozar eq.(8.69)-(8.70) / Hong & Lancaster
+   eq.(4.10a)-(4.10c). For N even, g(N+1)=coth²(β/4) (unequal
+   termination, standard equal-ripple result, Pozar Table 8.4);
+   for N odd, g(N+1)=1. NOTE (verified numerically, holds for all
+   N/ripple tested): g0·g1 = gN·g(N+1) always — this reciprocity
+   is why a single Qext formula (g1/FBW) is valid at BOTH ports
+   even for even-order filters; see Qext derivation below.
+═══════════════════════════════════════════════════════ */
+function chebyshevG(N, LdB){
+  // Compute g-values for Chebyshev low-pass prototype
+  var beta=Math.log(1/Math.tanh(LdB/17.37));
+  var gamma=Math.sinh(beta/(2*N));
+  var a=[]; var b=[];
+  for(var k=1;k<=N;k++) a.push(Math.sin((2*k-1)*Math.PI/(2*N)));
+  for(var k=1;k<=N;k++) b.push(gamma*gamma+Math.pow(Math.sin(k*Math.PI/N),2));
+  var g=[1]; // g0=1
+  g.push(2*a[0]/gamma); // g1
+  for(var k=1;k<N;k++) g.push(4*a[k-1]*a[k]/(b[k-1]*g[k]));
+  // gN+1
+  if(N%2===0) g.push(1/Math.pow(Math.tanh(beta/4),2));
+  else g.push(1);
+  return g;
+}
+
+function getFiltP(){
+  var warnings=[];
+  /* fv(): reads a field, correctly keeping an intentionally-entered 0 (gvOr
+     only falls back on truly empty/unparseable input) — and, per the audit
+     item, also surfaces a visible warning when the field WAS left empty,
+     instead of silently swapping in the default with no feedback at all. */
+  function fv(id, def, label){
+    var el = document.getElementById(id);
+    var raw = el ? el.value : '';
+    if(raw === '' || raw === null){ warnings.push(label+' left empty \u2014 using default '+def); return def; }
+    var v = parseFloat(raw);
+    if(isNaN(v)){ warnings.push(label+' is not a valid number \u2014 using default '+def); return def; }
+    return v;
+  }
+  function cv(raw, min, max, label){
+    var v = raw;
+    if(v===null || v===undefined || isNaN(v)){ warnings.push(label+' invalid, using '+min); return min; }
+    if(v < min){ warnings.push(label+'='+v+' below minimum, clamped to '+min); return min; }
+    if(v > max){ warnings.push(label+'='+v+' above maximum, clamped to '+max); return max; }
+    return v;
+  }
+  var W=cv(fv('dp-W',3,'Strip width W'), 0.1, 20, 'Strip width W');
+  var h=cv(fv('dp-h',1.6,'Substrate height h'), 0.05, 10, 'Substrate height h');
+  var er=cv(fv('dp-er',4.4,'Permittivity \u03b5r'), 1.0001, 20, 'Permittivity \u03b5r');
+  var tand=cv(fv('dp-tand',0.02,'Loss tangent'), 0, 0.1, 'Loss tangent');
+  var f0=cv(fv('dp-f0f',2.4,'Centre frequency f0'), 0.05, 20, 'Centre frequency f0');
+  var BW=cv(fv('dp-bw',200,'Bandwidth BW'), 1, 2000, 'Bandwidth BW');
+  var N=cv(Math.round(fv('dp-np',2,'Filter order N')), 2, 3, 'Filter order N (only 2-pole/3-pole supported)');
+  var rip=cv(fv('dp-rip',0.5,'Ripple'), 0.01, 3, 'Ripple');
+  var rr=msZ0(W,h,er); var Z0=rr.Z0, eref=rr.eref;
+  /* VERIFIED CORRECT: ring circumference = 1 guided wavelength at f0 (fundamental,
+     n=1, mode). Standard ring-resonator design condition 2*pi*R = n*lambda_g,
+     n=1,2,3... (Wolff & Knoppik 1971; Bahl, "Lumped Elements for RF and Microwave
+     Circuits", ring-resonator chapter; also Hong & Lancaster sec.5.4). Using the
+     fundamental (n=1) mode, which is the standard choice for a ring bandpass filter. */
+  var circ=gLam(f0,eref); // mm  (== c/(f0*sqrt(eref)), Pozar eq.3.183)
+  var R=circ/(2*Math.PI); // mean radius, mm — VERIFIED CORRECT, trivial from circumference
+  // Chebyshev prototype — VERIFIED CORRECT (Pozar eq.8.69-8.70 / Hong & Lancaster eq.4.10)
+  var g=chebyshevG(N,rip);
+  /* VERIFIED CORRECT: fractional bandwidth FBW = BW/f0 — Pozar eq.(8.71),
+     Hong & Lancaster eq.(4.1). (BW input in MHz, f0 in GHz, so *1e-3 unit-converts). */
+  var FBW=BW*1e-3/f0;
+  /* VERIFIED CORRECT: external Q, Qext = g0*g1/FBW (Hong & Lancaster eq.4.4a).
+     g0=1 (normalized source), so Qe=g1/FBW. Confirmed numerically (see audit) that
+     g0*g1 = gN*g(N+1) for ALL N (even and odd) under this g-value recurrence, so
+     this SAME value is also exactly QeN = gN*g(N+1)/FBW at the output port
+     (Hong & Lancaster eq.4.4b) — i.e. using one Qe for both symmetric I/O couplings
+     is exact here, not an approximation, for any N. */
+  var Qe=g[1]/FBW;
+  /* VERIFIED CORRECT: inter-resonator coupling coefficient k(i,i+1)=FBW/sqrt(gi*g(i+1))
+     — Hong & Lancaster eq.(4.3), Pozar eq.(8.75). For the 2/3-pole case this is k12. */
+  var k12=(N>=2)?FBW/Math.sqrt(g[1]*g[2]):0;
+  var om0=2*Math.PI*f0*1e9;
+  var eps0=8.854e-12, t_metal=0.035e-3;
+  /* APPROXIMATE / documented modeling choice: Leq, Ceq represent the ring's
+     fundamental-mode resonance as a lumped shunt tank at om0 (Leq*Ceq=1/om0^2).
+     Leq=Z0/(pi*f0) fixes the tank's susceptance slope to b=om0*Ceq=1/(2*Z0). This
+     is a reasonable order-of-magnitude choice (keeps Leq,Ceq of sensible nH/pF
+     scale and reproduces a valid bandpass response, as verified numerically), but
+     the EXACT susceptance-slope parameter of a physical ring resonator depends on
+     its geometry/mode/coupling location and is not independently re-derived here
+     from first principles — flagged per audit instructions rather than presented
+     as a verified closed-form. Everything downstream (Cio, C12, and the rigorous
+     S-parameter network) is at least internally CONSISTENT with this choice. */
+  var Leq=Z0/(Math.PI*f0*1e9); // H
+  var Ceq=1/(Math.pow(om0,2)*Leq); // F  (om0^2 = 1/(Leq*Ceq))
+  /* FIXED (was inconsistent/incorrect): admittance-inverter coupling values, from
+     the capacitive-pi-network <-> ideal-inverter equivalence J=om0*C (Matthaei,
+     Young & Jones, "Microwave Filters, Impedance-Matching Networks, and Coupling
+     Structures", 1980, sec.8.03; Hong & Lancaster eq.5.2-5.3 inverter synthesis):
+       J(0,1)   = sqrt( b*FBW / (Z0*g0*g1) )     [input inverter]
+       J(i,i+1) = b*FBW / sqrt(gi*g(i+1))         [inter-resonator, i=1..N-1]
+       J(N,N+1) = sqrt( b*FBW / (Z0*gN*g(N+1)) )  [output inverter]
+     and Cio=J01/om0, C12=J12/om0. This is the SAME formula the rigorous S-parameter
+     network (filtNetworkS, above) uses internally, so the Equivalent-Circuit panel
+     values now exactly match what is actually simulated for S11/S21/Smith/VSWR.
+     The OLD formula (Cio=pi/(2*om0*Qe*Z0)) did not depend on Ceq/b at all, which is
+     physically incomplete (a resonator's required coupling capacitor must depend on
+     how much energy it stores, i.e. on its own susceptance slope) — replaced. */
+  var bSlope=om0*Ceq;
+  var Cio=Math.sqrt(bSlope*FBW/(Z0*g[0]*g[1]))/om0; // F, input/output coupling cap
+  var C12=(N>=2)? (bSlope*FBW/Math.sqrt(g[1]*g[2]))/om0 : 0; // F, inter-resonator cap ( == k12*Ceq, unchanged/already-correct form)
+  /* APPROXIMATE (documented per audit instructions — no simple closed-form exists):
+     converting a lumped coupling CAPACITANCE to a physical microstrip GAP DISTANCE
+     needs an empirical discontinuity model (e.g. Garg & Bahl gap-capacitance curves,
+     "Microstrip Discontinuities", 1978; reproduced in Hong & Lancaster sec.5.6, or
+     Kirschning/Jansen/Koster curve-fits) which require several fitted coefficients
+     not implemented here. What follows is a crude parallel-plate order-of-magnitude
+     stand-in (metal thickness as "plate separation") — it gives a physically
+     plausible mm-scale gap for the geometry view, but is NOT a validated microstrip
+     gap model; a real design must size this gap from EM simulation or Garg-Bahl data. */
+  var g_io=eps0*(1+er)/2*(W*1e-3)*t_metal/(Cio)*1e3; // mm — approximate, see note above
+  var g12=(C12>0)?eps0*(1+er)/2*(W*1e-3)*t_metal/(C12)*1e3:0; // mm — approximate, see note above
+  /* Unloaded Q from conductor + dielectric loss, Qu = beta/(2*alpha) = pi/(alpha*circumference)
+     at resonance (beta=2*pi/circumference for the n=1 mode) — VERIFIED CORRECT relation
+     (Pozar eq.6.33-type resonator-Q/attenuation relation). */
+  var mu0=4e-7*Math.PI, Rs=Math.sqrt(Math.PI*f0*1e9*mu0/5.8e7); // Pozar eq.(1.131), copper sigma=5.8e7 S/m
+  /* ac: conductor attenuation. APPROXIMATE — this is the simplified wide-strip
+     estimate ac=Rs/(Z0*W) (valid for W/h gtrsim 1, ignores current-crowding/edge
+     correction). The precise Hammerstad-Jensen form (Pozar eq.3.199) needs an extra
+     W/h-dependent correction factor not reproduced here to avoid an unverified
+     coefficient — documented rather than guessed, per audit instructions. */
+  var ac=Rs/(Z0*W*1e-3);
+  /* ad: dielectric attenuation. FIXED — was the homogeneous-TEM formula
+     ad=(pi*f*sqrt(eref)/c)*tand, which omits microstrip's filling factor (only part
+     of the field sits in the dielectric). Replaced with the exact microstrip
+     formula, Pozar eq.(3.198): ad = k0*er*(eref-1)*tand / (2*sqrt(eref)*(er-1)),
+     k0=2*pi*f/c. For this filter's typical parameters the two formulas differ by
+     roughly 5-15%; the eq.3.198 form is the textbook-correct one for microstrip. */
+  var k0=2*Math.PI*f0*1e9/3e8;
+  var ad=(er>1.0001)? (k0*er*(eref-1)*tand)/(2*Math.sqrt(eref)*(er-1)) : 0;
+  var circ_m=circ*1e-3;
+  var Qu=Math.max(10,Math.PI/((ac+ad)*circ_m));
+  var sumG=0; for(var kk=1;kk<=N;kk++) sumG+=g[kk];
+  /* VERIFIED CORRECT (matches rigorous ABCD-network insertion loss within ~10%,
+     cross-checked numerically): midband dissipative insertion loss, Cohn's formula
+     ("Dissipation Loss in Multicoupled-Resonator Filters", Proc. IRE, 1959),
+     reproduced in Pozar/Hong & Lancaster: IL(dB) = 4.343*(f0/BW)*sum(gi/Qui), i=1..N. */
+  var IL_passband=4.343*sumG/(Qu*FBW);
+  return {Z0:Z0,eref:eref,er:eref,erRaw:er,W:W,h:h,tand:tand,
+    f0:f0,BW:BW,FBW:FBW,N:N,rip:rip,g:g,
+    Qe:Qe,k12:k12,g_io:Math.abs(g_io),g12:Math.abs(g12),
+    R:R,circ:circ,Qu:Qu,IL_passband:IL_passband,
+    Leq:Leq*1e9,Ceq:Ceq*1e15,
+    Cio:Cio*1e15,C12:C12*1e15,
+    ZLr:Z0,ZLi:0,len:circ,warnings:warnings};
+}
+
+/* ═══════════════════════════════════════════════════════
+   RING FILTER — RIGOROUS S-PARAMETER ENGINE
+   Builds the exact ABCD (chain) matrix of the coupled-resonator
+   ladder network shown in the Equivalent Circuit panel:
+     Port1 -- Cio -- [shunt Lr//Cr//Rloss] -- C12 -- [shunt Lr//Cr//Rloss] -- ... -- Cio -- Port2
+   then converts ABCD -> S11,S21 with the standard 2-port formulas
+   (Pozar, "Microwave Engineering"). This is the same textbook method
+   used to analyze any coupled-resonator bandpass filter, so S11/S21
+   here come from the actual lumped-element network, not a fitted
+   curve — and because it is fully complex, the phase is real too,
+   which is what the Smith chart and VSWR panels need.
+═══════════════════════════════════════════════════════ */
+function cx_add(a,b){return [a[0]+b[0],a[1]+b[1]];}
+function cx_sub(a,b){return [a[0]-b[0],a[1]-b[1]];}
+function cx_mul(a,b){return [a[0]*b[0]-a[1]*b[1], a[0]*b[1]+a[1]*b[0]];}
+function cx_div(a,b){var d=b[0]*b[0]+b[1]*b[1]; return [(a[0]*b[0]+a[1]*b[1])/d, (a[1]*b[0]-a[0]*b[1])/d];}
+function cx_abs(a){return Math.sqrt(a[0]*a[0]+a[1]*a[1]);}
+function mat2_mul(m1,m2){
+  return {
+    A:cx_add(cx_mul(m1.A,m2.A),cx_mul(m1.B,m2.C)), B:cx_add(cx_mul(m1.A,m2.B),cx_mul(m1.B,m2.D)),
+    C:cx_add(cx_mul(m1.C,m2.A),cx_mul(m1.D,m2.C)), D:cx_add(cx_mul(m1.C,m2.B),cx_mul(m1.D,m2.D))
+  };
+}
+function seriesCapABCD(om, Cf){ return {A:[1,0], B:[0,-1/(om*Cf)], C:[0,0], D:[1,0]}; }
+function shuntTankABCD(om, L, Cf, R){
+  var Y=[1/R, om*Cf - 1/(om*L)];
+  return {A:[1,0], B:[0,0], C:Y, D:[1,0]};
+}
+function invABCD(J){ return {A:[0,0], B:[0,-1/J], C:[0,-J], D:[0,0]}; }
+/* Standard direct-coupled-resonator bandpass network (Hong & Lancaster, "Microstrip
+   Filters for RF/Microwave Applications", ch.5): N identical shunt resonators (each
+   with susceptance slope b=om0*Ceq and loss Rp set by the SAME Qu shown in Live
+   Design Values) linked by admittance inverters J(i,i+1) sized from the Chebyshev
+   g-values and FBW — the textbook method for turning a lowpass prototype into a
+   coupled-resonator bandpass filter. This is fully complex (real + imaginary), so
+   it feeds the Smith chart and VSWR with real reflection-coefficient data, and its
+   magnitude reduces to the same Chebyshev |S21|,|S11| already used for the chart
+   labels — the two independent derivations agree, which is the physics cross-check.  */
+function filtNetworkS(p, freqGHz){
+  var N=p.N, Ceq=p.Ceq*1e-15, Leq=p.Leq*1e-9, Z0=p.Z0, FBW=p.FBW, g=p.g;
+  var om0=2*Math.PI*p.f0*1e9, om=2*Math.PI*freqGHz*1e9;
+  var bSlope=om0*Ceq;
+  var J=[Math.sqrt(bSlope*FBW/(Z0*g[0]*g[1]))];
+  for(var i=1;i<N;i++) J.push(bSlope*FBW/Math.sqrt(g[i]*g[i+1]));
+  J.push(Math.sqrt(bSlope*FBW/(Z0*g[N]*g[N+1])));
+  var Rp=p.Qu/(om0*Ceq);
+  var M={A:[1,0],B:[0,0],C:[0,0],D:[1,0]};
+  M=mat2_mul(M, invABCD(J[0]));
+  for(var k=0;k<N;k++){
+    M=mat2_mul(M, shuntTankABCD(om,Leq,Ceq,Rp));
+    M=mat2_mul(M, invABCD(J[k+1]));
+  }
+  var A=M.A,B=M.B,C=M.C,D=M.D;
+  var n1=cx_add(A, cx_div(B,[Z0,0]));
+  var n2=cx_add(cx_mul(C,[Z0,0]), D);
+  var den=cx_add(n1,n2);
+  var S11=cx_div(cx_sub(n1,n2), den);
+  var S21=cx_div([2,0], den);
+  return {S11:S11, S21:S21};
+}
+function filtNetworkSweep(p, freqs){
+  return freqs.map(function(f){ return filtNetworkS(p,f); });
+}
+
+/* ═══════════════════════════════════════════════════════
+   PER-RING STORED ENERGY (for Geometry View resonance glow only)
+   — Purely additive / read-only: does NOT change filtNetworkS, any
+   physics constant, or any equation above. It re-walks the exact
+   same coupled-resonator ABCD cascade (same J[], Rp, Leq, Ceq) but
+   backward from the matched load, using each element's own already-
+   defined forward matrix relation, to recover the node voltage AT
+   each shunt resonator — the one quantity filtNetworkS computes
+   internally but never exposes (it only returns the port S11/S21).
+   Since every resonator shares the same Ceq, |V_ring|² is directly
+   proportional to the stored energy (½·C·V²) in that ring, so the
+   ratio between rings — and the falloff away from f0 — comes
+   straight out of the real network response, not an animation curve.
+═══════════════════════════════════════════════════════ */
+function mat2_apply(M, v){
+  return [cx_add(cx_mul(M.A,v[0]), cx_mul(M.B,v[1])), cx_add(cx_mul(M.C,v[0]), cx_mul(M.D,v[1]))];
+}
+function filtRingEnergiesAt(p, freqGHz){
+  var N=p.N, Ceq=p.Ceq*1e-15, Leq=p.Leq*1e-9, Z0=p.Z0, FBW=p.FBW, g=p.g;
+  var om0=2*Math.PI*p.f0*1e9, om=2*Math.PI*freqGHz*1e9;
+  var bSlope=om0*Ceq;
+  var J=[Math.sqrt(bSlope*FBW/(Z0*g[0]*g[1]))];
+  for(var i=1;i<N;i++) J.push(bSlope*FBW/Math.sqrt(g[i]*g[i+1]));
+  J.push(Math.sqrt(bSlope*FBW/(Z0*g[N]*g[N+1])));
+  var Rp=p.Qu/(om0*Ceq);
+
+  var S21=filtNetworkS(p, freqGHz).S21;         // reuse the unmodified engine result
+  var state=[S21, cx_div(S21,[Z0,0])];           // matched-load node state (relative units, a1=1)
+  var energies=new Array(N);
+
+  state=mat2_apply(invABCD(J[N]), state);        // node at the last resonator (closest to port 2)
+  energies[N-1]=cx_abs(state[0])*cx_abs(state[0]);
+  for(var r=N; r>=2; r--){
+    state=mat2_apply(shuntTankABCD(om,Leq,Ceq,Rp), state); // shunt element: voltage carries through unchanged
+    state=mat2_apply(invABCD(J[r-1]), state);               // node at the next resonator toward port 1
+    energies[r-2]=cx_abs(state[0])*cx_abs(state[0]);
+  }
+  return energies; // length N, relative |V|² per ring == relative stored energy per ring
+}
+/* Samples the real network response across a band around f0 (derived from
+   the already-computed p.f0 / p.BW — no new physics, just where to look) and
+   normalizes so 1.0 = the peak stored energy seen anywhere in that band. */
+function filtEnergySweep(p){
+  var half=Math.max(6*(p.BW/1000), p.f0*0.06);
+  var fLo=Math.max(0.05,p.f0-half), fHi=p.f0+half, pts=48;
+  var freqs=Array.from({length:pts},function(_,k){return fLo+k*(fHi-fLo)/(pts-1);});
+  var rows=freqs.map(function(f){ return filtRingEnergiesAt(p,f); });
+  var maxE=1e-30;
+  rows.forEach(function(row){ row.forEach(function(e){ if(e>maxE) maxE=e; }); });
+  var norm=rows.map(function(row){ return row.map(function(e){ return e/maxE; }); });
+  return {freqs:freqs, energies:norm};
+}
+
+/* ═══════════════════════════════════════════════════════
+   GEOMETRY CANVAS — RING RESONATOR
+═══════════════════════════════════════════════════════ */
+function drawRingGeo(p){
+  var cvs=document.getElementById('res-geo-cvs'); if(!cvs)return;
+  var CW=cvs.parentElement.clientWidth||700, CH=175;
+  cvs.width=CW; cvs.height=CH;
+  var ctx=cvs.getContext('2d'); ctx.clearRect(0,0,CW,CH);
+  var cx=CW/2, cy=CH/2;
+  var scale=Math.min((CH*0.38)/(p.R+p.W/2+8), (CW*0.28)/(p.R+p.W/2+8));
+  var Rpx=(p.R)*scale, Wpx=Math.max(4,p.W*scale);
+  var Ri=(p.R-p.W/2)*scale, Ro=(p.R+p.W/2)*scale;
+  // Substrate bg
+  ctx.fillStyle='rgba(99,102,241,0.05)';
+  ctx.fillRect(cx-Ro-30,cy-Ro-30,2*(Ro+30),2*(Ro+30));
+  ctx.strokeStyle='rgba(99,102,241,0.2)'; ctx.lineWidth=0.5;
+  ctx.setLineDash([3,3]); ctx.strokeRect(cx-Ro-30,cy-Ro-30,2*(Ro+30),2*(Ro+30));
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(99,102,241,0.35)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+  ctx.fillText('Substrate er='+p.erRaw+' h='+p.h+'mm', cx, cy+Ro+42);
+  // Ring
+  ctx.beginPath(); ctx.arc(cx,cy,Ro,0,2*Math.PI);
+  ctx.fillStyle='rgba(29,93,168,0.12)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,Ro,0,2*Math.PI);
+  ctx.strokeStyle='#1d5da8'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,Ri,0,2*Math.PI);
+  ctx.strokeStyle='#1d5da8'; ctx.lineWidth=1.5; ctx.stroke();
+  // Standing wave overlay (n=1)
+  ctx.beginPath();
+  for(var i=0;i<=80;i++){
+    var ang=-Math.PI/2+i/80*2*Math.PI;
+    var amp=Math.cos(ang)*0.15*Rpx;
+    var r2=Rpx+amp;
+    var x=cx+r2*Math.cos(ang), y=cy+r2*Math.sin(ang);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(109,77,199,0.7)'; ctx.lineWidth=1.8; ctx.stroke();
+  // Gap at top (Port 1)
+  var gapPx=Math.max(3,p.g*scale);
+  var feedWpx=Math.max(4,p.Wf*scale);
+  var lfPx=Math.max(12,p.Lf*scale);
+  // Top gap
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fillRect(cx-p.W*scale/2,cy-Ro-gapPx,p.W*scale,gapPx);
+  ctx.strokeStyle='#c23b3b'; ctx.lineWidth=0.8;
+  ctx.strokeRect(cx-p.W*scale/2,cy-Ro-gapPx,p.W*scale,gapPx);
+  // Feed line top
+  ctx.fillStyle='rgba(181,117,10,0.15)';
+  ctx.fillRect(cx-feedWpx/2,cy-Ro-gapPx-lfPx,feedWpx,lfPx);
+  ctx.strokeStyle='#b5750a'; ctx.lineWidth=1; ctx.strokeRect(cx-feedWpx/2,cy-Ro-gapPx-lfPx,feedWpx,lfPx);
+  ctx.fillStyle='rgba(181,117,10,0.8)'; ctx.font='bold 8px Courier New'; ctx.textAlign='center';
+  ctx.fillText('P1',cx,cy-Ro-gapPx-lfPx-3);
+  // Bottom gap
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fillRect(cx-p.W*scale/2,cy+Ro,p.W*scale,gapPx);
+  ctx.strokeStyle='#c23b3b'; ctx.lineWidth=0.8;
+  ctx.strokeRect(cx-p.W*scale/2,cy+Ro,p.W*scale,gapPx);
+  // Feed line bottom
+  ctx.fillStyle='rgba(181,117,10,0.15)';
+  ctx.fillRect(cx-feedWpx/2,cy+Ro+gapPx,feedWpx,lfPx);
+  ctx.strokeStyle='#b5750a'; ctx.lineWidth=1; ctx.strokeRect(cx-feedWpx/2,cy+Ro+gapPx,feedWpx,lfPx);
+  ctx.fillStyle='rgba(181,117,10,0.8)'; ctx.textAlign='center';
+  ctx.fillText('P2',cx,cy+Ro+gapPx+lfPx+9);
+  // Radius annotation
+  ctx.strokeStyle='rgba(96,160,200,0.5)'; ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Rpx,cy);ctx.stroke();
+  ctx.fillStyle='rgba(96,160,200,0.7)'; ctx.font='8px Courier New'; ctx.textAlign='center';
+  ctx.fillText('R='+p.R.toFixed(2)+'mm',cx+Rpx/2,cy-4);
+  // W annotation
+  ctx.beginPath();ctx.moveTo(cx+Ri,cy);ctx.lineTo(cx+Ro,cy);ctx.stroke();
+  ctx.fillText('W='+p.W+'mm',cx+(Ri+Ro)/2,cy+10);
+  // Gap annotation
+  ctx.fillStyle='rgba(194,59,59,0.7)'; ctx.textAlign='center';
+  ctx.fillText('g='+p.g+'mm',cx+Ro+20,cy-Ro+gapPx/2);
+  // f0 badge
+  ctx.fillStyle='rgba(181,117,10,0.1)';
+  ctx.beginPath(); ctx.roundRect(cx-110,CH-20,220,16,3); ctx.fill();
+  ctx.fillStyle='#b5750a'; ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+  ctx.fillText('f1='+p.f0.toFixed(4)+'GHz | f2='+p.f2.toFixed(3)+'GHz | Z0='+p.Z0.toFixed(1)+'\u03a9',cx,CH-9);
+}
+
+/* ═══════════════════════════════════════════════════════
+   GEOMETRY CANVAS — FILTER
+═══════════════════════════════════════════════════════ */
+function filtGeoSVG(p){
+  var N=p.N||2;
+  var CH=175, cy=CH/2;
+  var scale=Math.min((CH*0.35)/(p.R+p.W/2+5), 5);
+  var Ro=(p.R+p.W/2)*scale, Ri=(p.R-p.W/2)*scale;
+  var thickness=Ro-Ri;
+  var colors=['#1d5da8','#6d4dc7','#1e8a52'];
+  function tw(str,fs){ return str.length*fs*0.62; } // monospace width estimate (Courier New), used to size gaps/boxes so text never overlaps
+
+  // Ensure the ring is big enough that its own "Ring N" label fits without spilling into neighbours
+  var minRo=tw('Ring '+N,8)/2+6;
+  if(Ro<minRo){ Ro=minRo; Ri=Math.max(4,Ro-thickness); }
+
+  // Size the inter-resonator gap box to the widest label it must hold (g_XY / k_XY, two lines)
+  var maxGapLabelW=0;
+  for(var gi=0;gi<N-1;gi++){
+    maxGapLabelW=Math.max(maxGapLabelW, tw('g_'+(gi+1)+(gi+2)+'='+p.g12.toFixed(2)+'mm',7));
+    maxGapLabelW=Math.max(maxGapLabelW, tw('k'+(gi+1)+(gi+2)+'='+p.k12.toFixed(4),7));
+  }
+  var minGapPx=Math.max(24, maxGapLabelW+16);
+  var spacing=Ro*2+minGapPx;
+  var totalW=(N-1)*spacing+2*Ro;
+
+  // Size the P1/P2 feed stub to fit its own "g_io=...mm" label
+  var gioLabelW=tw('g_io='+p.g_io.toFixed(3)+'mm',7);
+  var portStub=Math.max(40, Ro*0.7, gioLabelW+16);
+  var assemblyW=totalW+2*portStub;
+
+  var bottomText='f0='+p.f0+'GHz | BW='+p.BW+'MHz | N='+p.N+' | R='+p.R.toFixed(2)+'mm | g_io='+p.g_io.toFixed(2)+'mm | g12='+p.g12.toFixed(2)+'mm';
+  var bottomW=tw(bottomText,9)+40;
+
+  // Zoom-to-fit: margin scales with assembly size so the drawing occupies
+  // ~80-85% of the viewBox width (never below a safe minimum so labels
+  // near the ports/edges are never clipped).
+  var pad=Math.max(18, assemblyW*0.088);
+  var VBW=Math.max(assemblyW+2*pad, bottomW);
+  var x0=(VBW-assemblyW)/2+portStub+Ro; // centre the whole assembly within the viewBox
+  var showDim=!!p.__showDim;
+
+  var s='<svg viewBox="0 0 '+VBW.toFixed(0)+' '+CH+'" data-filt-n="'+N+'" style="width:100%;margin:8px 0;border-radius:6px;display:block" xmlns="http://www.w3.org/2000/svg">';
+
+  // ── Defs: copper + PCB substrate materials (lightweight gradients, no images) ──
+  s+='<defs>'
+    +'<linearGradient id="pcbGrad" x1="0" y1="0" x2="0" y2="1">'
+      +'<stop offset="0%" stop-color="#163722"/>'
+      +'<stop offset="48%" stop-color="#0e2818"/>'
+      +'<stop offset="100%" stop-color="#081911"/>'
+    +'</linearGradient>'
+    +'<pattern id="pcbTex" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">'
+      +'<line x1="0" y1="0" x2="0" y2="16" stroke="#1e4229" stroke-width="0.5" opacity="0.22"/>'
+    +'</pattern>'
+    +'<linearGradient id="cuGrad" x1="0" y1="0" x2="0" y2="'+CH+'" gradientUnits="userSpaceOnUse">'
+      +'<stop offset="0%" stop-color="#f7dcae"/>'
+      +'<stop offset="20%" stop-color="#e6ab6a"/>'
+      +'<stop offset="52%" stop-color="#c37e39"/>'
+      +'<stop offset="80%" stop-color="#8a5324"/>'
+      +'<stop offset="100%" stop-color="#603612"/>'
+    +'</linearGradient>'
+    +'<radialGradient id="padGrad" cx="35%" cy="30%" r="75%">'
+      +'<stop offset="0%" stop-color="#fdf1d9"/>'
+      +'<stop offset="55%" stop-color="#dd9c53"/>'
+      +'<stop offset="100%" stop-color="#7c4720"/>'
+    +'</radialGradient>'
+    +'<filter id="cuGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6"/></filter>'
+  +'</defs>';
+
+  // ── PCB substrate background ──
+  s+='<rect x="0" y="0" width="'+VBW.toFixed(0)+'" height="'+CH+'" rx="6" fill="url(#pcbGrad)"/>';
+  s+='<rect x="0" y="0" width="'+VBW.toFixed(0)+'" height="'+CH+'" rx="6" fill="url(#pcbTex)"/>';
+
+  var visThick=thickness*1.125; // +12.5% visual trace thickness (rendering only; R/W values unchanged)
+  var midR=(Ro+Ri)/2;
+
+  // Feed line width — architecturally independent of the ring trace width so a
+  // future dedicated 50\u03a9 feed-width parameter (p.Wf, e.g. from a microstrip
+  // Z0 calc) can drive it on its own. getFiltP() doesn't compute a separate Wf
+  // yet, so W_feed intentionally falls back to the ring's own real, physics-
+  // derived width (W_ring) instead of an arbitrary constant \u2014 keeps the two
+  // traces visually consistent with each other as the user changes W, rather
+  // than a fixed pixel value that silently drifts out of proportion.
+  var W_ring = visThick;
+  var W_feed = (p.Wf ? p.Wf*scale*1.125 : W_ring);
+
+  var centers=[];
+  for(var n=0;n<N;n++){
+    var cx=x0+n*spacing; centers.push(cx);
+    var col=colors[n%colors.length];
+    // Soft resonator-identity halo (keeps the original per-ring colour coding
+    // used to explain coupling, without it looking like the physical trace)
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+(Ro+4).toFixed(1)+'" fill="none" stroke="'+col+'" stroke-opacity="0.28" stroke-width="1" stroke-dasharray="2,3"/>';
+    // Resonance glow (blurred halo behind the trace) — opacity is set purely by
+    // the animation loop from the real per-ring |V|² energy, never inline here.
+    s+='<circle id="flt-ring-glow-'+n+'" cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+midR.toFixed(2)+'" fill="none" stroke="#ffb454" stroke-width="'+(visThick+7).toFixed(2)+'" stroke-linecap="round" filter="url(#cuGlow)" opacity="0"/>';
+    // Copper ring trace — rendered as a true annulus at the exact R/W-derived radius, metallic gradient, smooth round joins
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+midR.toFixed(2)+'" fill="none" stroke="url(#cuGrad)" stroke-width="'+visThick.toFixed(2)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+Ro.toFixed(1)+'" fill="none" stroke="rgba(255,241,214,0.35)" stroke-width="0.6"/>';
+    s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+Ri.toFixed(1)+'" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="0.6"/>';
+    // Hot-copper overlay — same path as the trace, crossfaded in on top by the animation loop (energized look, no colour swap of the base copper)
+    s+='<circle id="flt-ring-hot-'+n+'" cx="'+cx.toFixed(1)+'" cy="'+cy+'" r="'+midR.toFixed(2)+'" fill="none" stroke="#fff2d2" stroke-width="'+visThick.toFixed(2)+'" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>';
+    s+='<text x="'+cx.toFixed(1)+'" y="'+(cy+4)+'" fill="'+col+'" font-size="8" font-weight="600" text-anchor="middle" font-family="Courier New">Ring '+(n+1)+'</text>';
+
+    if(showDim && n===0){
+      // Ring Radius (R) + Strip Width (W) annotations — shown once (rings share the same R/W)
+      s+='<line x1="'+cx.toFixed(1)+'" y1="'+cy+'" x2="'+(cx+Ro).toFixed(1)+'" y2="'+cy+'" stroke="rgba(148,197,230,0.55)" stroke-width="0.6" stroke-dasharray="2,2"/>';
+      s+='<text x="'+(cx+Ro/2).toFixed(1)+'" y="'+(cy-Ro-6)+'" fill="rgba(148,197,230,0.9)" font-size="7" text-anchor="middle" font-family="Courier New">R='+p.R.toFixed(2)+'mm</text>';
+      s+='<line x1="'+(cx+Ri).toFixed(1)+'" y1="'+(cy+Ro+9)+'" x2="'+(cx+Ro).toFixed(1)+'" y2="'+(cy+Ro+9)+'" stroke="rgba(230,171,106,0.7)" stroke-width="0.7"/>';
+      s+='<text x="'+(cx+(Ri+Ro)/2).toFixed(1)+'" y="'+(cy+Ro+18)+'" fill="rgba(230,171,106,0.9)" font-size="7" text-anchor="middle" font-family="Courier New">W='+p.W+'mm</text>';
+    }
+  }
+
+  // P1 / P2 feed lines — copper microstrip stubs with rounded caps + SMA-style launch pad
+  var cx0=x0, cxN=centers[N-1];
+  var p1x1=cx0-Ro-portStub, p1x2=cx0-Ro;
+  var p2x1=cxN+Ro, p2x2=cxN+Ro+portStub;
+
+  s+='<line x1="'+p1x1.toFixed(1)+'" y1="'+cy+'" x2="'+p1x2.toFixed(1)+'" y2="'+cy+'" stroke="url(#cuGrad)" stroke-width="'+W_feed.toFixed(2)+'" stroke-linecap="round"/>';
+  s+='<circle cx="'+p1x1.toFixed(1)+'" cy="'+cy+'" r="4.4" fill="url(#padGrad)" stroke="rgba(0,0,0,0.45)" stroke-width="0.6"/>';
+  s+='<text x="'+(p1x1-3).toFixed(1)+'" y="'+(cy-16)+'" fill="#b5750a" font-size="9" font-weight="bold" text-anchor="start" font-family="Courier New">P1</text>';
+  if(showDim) s+='<text x="'+((p1x1+p1x2)/2).toFixed(1)+'" y="'+(cy-6)+'" fill="rgba(194,59,59,0.9)" font-size="7" text-anchor="middle" font-family="Courier New">g_io='+p.g_io.toFixed(3)+'mm</text>';
+
+  s+='<line x1="'+p2x1.toFixed(1)+'" y1="'+cy+'" x2="'+p2x2.toFixed(1)+'" y2="'+cy+'" stroke="url(#cuGrad)" stroke-width="'+W_feed.toFixed(2)+'" stroke-linecap="round"/>';
+  s+='<circle cx="'+p2x2.toFixed(1)+'" cy="'+cy+'" r="4.4" fill="url(#padGrad)" stroke="rgba(0,0,0,0.45)" stroke-width="0.6"/>';
+  s+='<text x="'+(p2x2+3).toFixed(1)+'" y="'+(cy-16)+'" fill="#b5750a" font-size="9" font-weight="bold" text-anchor="end" font-family="Courier New">P2</text>';
+  if(showDim) s+='<text x="'+((p2x1+p2x2)/2).toFixed(1)+'" y="'+(cy-6)+'" fill="rgba(194,59,59,0.9)" font-size="7" text-anchor="middle" font-family="Courier New">g_io='+p.g_io.toFixed(3)+'mm</text>';
+
+  // Inter-resonator coupling gaps — box width guaranteed >= its own text width, so labels never spill onto the rings
+  for(var n=0;n<N-1;n++){
+    var cx1=centers[n]+Ro, cx2=centers[n+1]-Ro;
+    var midx=(cx1+cx2)/2;
+    s+='<rect x="'+cx1.toFixed(1)+'" y="'+(cy-Ro).toFixed(1)+'" width="'+(cx2-cx1).toFixed(1)+'" height="'+(2*Ro).toFixed(1)+'" rx="3" fill="rgba(30,138,82,.10)" stroke="rgba(30,138,82,.35)" stroke-width="0.8" stroke-dasharray="3,2"/>';
+    if(showDim){
+      s+='<text x="'+midx.toFixed(1)+'" y="'+(cy+4)+'" fill="#1e8a52" font-size="7" text-anchor="middle" font-family="Courier New">g_'+(n+1)+(n+2)+'='+p.g12.toFixed(2)+'mm</text>';
+      s+='<text x="'+midx.toFixed(1)+'" y="'+(cy+14)+'" fill="#1e8a52" font-size="7" text-anchor="middle" font-family="Courier New">k'+(n+1)+(n+2)+'='+p.k12.toFixed(4)+'</text>';
+    }
+  }
+
+  // Bottom info bar — viewBox width already guaranteed >= this text's width, so it never overflows
+  s+='<rect x="'+pad+'" y="'+(CH-24)+'" width="'+(VBW-2*pad).toFixed(1)+'" height="16" rx="3" fill="rgba(181,117,10,.1)"/>';
+  s+='<text x="'+(VBW/2).toFixed(1)+'" y="'+(CH-13)+'" fill="#b5750a" font-size="9" font-weight="bold" text-anchor="middle" font-family="Courier New">'+bottomText+'</text>';
+
+  s+='</svg>';
+  return s;
+}
+
+function drawFiltGeo(p){
+  var el=document.getElementById('filt-geo-svg'); if(!el)return;
+  p.__showDim=filtShowDims;
+  el.innerHTML=filtGeoSVG(p);
+  // Recompute the real per-ring energy-vs-frequency data for the new design
+  // point and (re)start the lightweight glow loop that reads it.
+  try{ filtGlowData=filtEnergySweep(p); }catch(e){ filtGlowData=null; }
+  filtGlowStartT=null;
+  startFiltGlowLoop();
+}
+
+function toggleFiltDims(){
+  filtShowDims=!filtShowDims;
+  var btn=document.getElementById('dimToggle');
+  if(btn) btn.classList.toggle('on', filtShowDims);
+  var p=getP();
+  if(p) drawFiltGeo(p);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESONANCE GLOW ANIMATION (Geometry View only)
+   Sweeps the visualized frequency slowly back and forth across the band
+   used in filtEnergySweep(), and on every frame sets each ring's glow /
+   hot-overlay opacity to the REAL interpolated |V|² sample at that
+   frequency (filtGlowData, computed once per design-parameter change in
+   drawFiltGeo — never recomputed per frame, and never a canned curve).
+   Only attribute writes happen per frame — no SVG rebuild — so this stays
+   cheap regardless of how often it runs.
+═══════════════════════════════════════════════════════ */
+var filtGlowData=null, filtGlowStartT=null, filtGlowRAF=null;
+var FILT_GLOW_SWEEP_S=5.5; // seconds for one one-way sweep across the band
+
+function startFiltGlowLoop(){
+  if(filtGlowRAF!=null) return; // already running
+  function tick(t){
+    filtGlowRAF=requestAnimationFrame(tick);
+    var el=document.getElementById('filt-geo-svg');
+    var data=filtGlowData;
+    if(!el || !data || !data.freqs || data.freqs.length<2) return;
+    if(filtGlowStartT==null) filtGlowStartT=t;
+    var elapsed=(t-filtGlowStartT)/1000;
+    var cyc=(elapsed % (2*FILT_GLOW_SWEEP_S))/FILT_GLOW_SWEEP_S; // 0..2
+    var tri=cyc<=1?cyc:2-cyc; // 0→1→0 ping-pong across the swept band
+    var pts=data.freqs.length;
+    var idx=tri*(pts-1);
+    var i0=Math.max(0,Math.min(pts-1,Math.floor(idx)));
+    var i1=Math.min(pts-1,i0+1);
+    var frac=idx-i0;
+    var row0=data.energies[i0], row1=data.energies[i1];
+    for(var n=0;n<row0.length;n++){
+      var e=row0[n]*(1-frac)+row1[n]*frac; // 0..1, real interpolated stored-energy sample
+      var glow=el.querySelector('#flt-ring-glow-'+n);
+      var hot=el.querySelector('#flt-ring-hot-'+n);
+      if(glow) glow.setAttribute('opacity', (e*0.85).toFixed(3));
+      if(hot) hot.setAttribute('opacity', (e*0.8).toFixed(3));
+    }
+  }
+  filtGlowRAF=requestAnimationFrame(tick);
+}
+
+window.addEventListener('load', function(){
+  curTab = 'design';
+  openMod('filt');
+});
+</script>
 </body>
 </html>
