@@ -1,0 +1,90 @@
+{
+  "version": 2.0,
+  "questions": [
+    {
+      "question": "Q1. For a microstrip line on a dielectric substrate with relative permittivity εr, why is the effective relative permittivity εeff always less than εr (εeff < εr)?",
+      "answers": {
+        "a": "Magnetic fields are completely confined within the conductor boundaries.",
+        "b": "Surface waves cause energy dissipation reducing the apparent dielectric constant.",
+        "c": "Conductor losses lower the effective capacitance per unit length.",
+        "d": "Part of the electric field lines exist in the air region above the substrate, which has a relative permittivity of 1."
+      },
+      "explanations": {
+        "a": "Magnetic field confinement is not the reason for εeff being less than εr.",
+        "b": "Surface-wave losses do not determine the basic relationship between εeff and εr.",
+        "c": "Conductor losses are not the primary reason for the effective relative permittivity being less than the substrate permittivity.",
+        "d": "Correct. A microstrip line has electric fields partly in the dielectric substrate and partly in the air above it. Since air has a relative permittivity of approximately 1, the effective relative permittivity lies between 1 and εr."
+      },
+      "correctAnswer": "d",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q2. What is the fundamental resonance condition for a microstrip ring resonator having a mean circumference L_mean and guided wavelength λg?",
+      "answers": {
+        "a": "L_mean = n * λg (for integer n = 1, 2, 3...)",
+        "b": "L_mean = λg / 2",
+        "c": "L_mean = (2n + 1) * λg / 4",
+        "d": "L_mean = 2 * λg"
+      },
+      "explanations": {
+        "a": "Correct. A ring resonator resonates when its mean circumference is an integer multiple of the guided wavelength, so L_mean = nλg.",
+        "b": "This represents only a specific fraction of a wavelength and is not the general resonance condition for a ring resonator.",
+        "c": "This is associated with quarter-wavelength or odd-mode conditions in other resonant structures, not the fundamental ring-resonator condition.",
+        "d": "This is only a particular multiple of wavelength and is not the general resonance condition."
+      },
+      "correctAnswer": "a",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q3. How is the guided wavelength λg related to the free-space wavelength λ0 and the effective relative permittivity εeff of a microstrip line?",
+      "answers": {
+        "a": "λg = λ0 * εeff",
+        "b": "λg = λ0 / sqrt(εeff)",
+        "c": "λg = λ0 / εeff",
+        "d": "λg = λ0 * sqrt(εeff)"
+      },
+      "explanations": {
+        "a": "The guided wavelength is not directly proportional to εeff.",
+        "b": "Correct. The guided wavelength is reduced compared with the free-space wavelength according to λg = λ0 / √εeff.",
+        "c": "The effective permittivity appears under a square root in the wavelength relationship, not directly in the denominator.",
+        "d": "Increasing εeff decreases the guided wavelength, so multiplication by √εeff is incorrect."
+      },
+      "correctAnswer": "b",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q4. In designing a microstrip ring resonator with a standard feedline, what primary physical parameter of the microstrip line is adjusted to control its characteristic impedance Z0?",
+      "answers": {
+        "a": "The overall physical length of the microstrip trace.",
+        "b": "The metal conductivity of the ground plane.",
+        "c": "The ratio of the conductor strip width to the substrate thickness (W/h).",
+        "d": "The operating frequency of the RF signal."
+      },
+      "explanations": {
+        "a": "The overall length mainly affects the phase and resonance behavior, not the primary characteristic impedance.",
+        "b": "Metal conductivity affects conductor losses but is not the primary geometric parameter used to set characteristic impedance.",
+        "c": "Correct. The characteristic impedance of a microstrip line is strongly controlled by its geometry, particularly the ratio W/h, where W is the conductor width and h is the substrate thickness.",
+        "d": "Operating frequency affects the electrical behavior of the line but is not the primary physical parameter used to set its characteristic impedance."
+      },
+      "correctAnswer": "c",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q5. If a microstrip ring resonator exhibits resonances at frequencies f1, f2, f3 corresponding to mode numbers n = 1, 2, 3, what can be inferred about the spacing of these resonance frequencies in an ideal, non-dispersive medium?",
+      "answers": {
+        "a": "They are spaced logarithmically.",
+        "b": "They are spaced quadratically (fn is proportional to n^2).",
+        "c": "They are inversely proportional to n.",
+        "d": "They are equally spaced (fn = n * f1)."
+      },
+      "explanations": {
+        "a": "The resonance frequencies of an ideal ring resonator do not follow a logarithmic spacing relationship.",
+        "b": "The resonance frequencies are not proportional to the square of the mode number in an ideal, non-dispersive ring resonator.",
+        "c": "The resonance frequencies increase with mode number rather than being inversely proportional to it.",
+        "d": "Correct. In an ideal, non-dispersive medium, the resonance frequencies are integer multiples of the fundamental frequency, so fn = n * f1. Therefore, adjacent resonances are equally spaced."
+      },
+      "correctAnswer": "d",
+      "difficulty": "beginner"
+    }
+  ]
+}
