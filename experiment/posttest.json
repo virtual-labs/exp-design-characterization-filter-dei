@@ -2,37 +2,88 @@
   "version": 2.0,
   "questions": [
     {
-      "question": "This is a Sample Question 1?",
+      "question": "Q1. When designing a dual-mode microstrip ring filter, what physical element is most commonly introduced to couple the two degenerate orthogonal modes and create a bandpass response?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "A continuous, perfectly symmetric grounding via in the center of the ring.",
+        "b": "A small patch perturbation, notch, or stub located at a 45-degree angle relative to the feed lines.",
+        "c": "An isolation resistor placed in series along the input transmission feed line.",
+        "d": "A secondary concentric outer ring with a completely different substrate thickness."
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "A symmetric grounding via does not provide the required mode perturbation for coupling the two degenerate orthogonal modes.",
+        "b": "Correct. A small perturbation such as a patch, notch, or stub is introduced to disturb the symmetry of the ring and couple the two orthogonal degenerate modes, producing the desired dual-mode response.",
+        "c": "An isolation resistor would introduce loss rather than provide the required mode coupling mechanism.",
+        "d": "A secondary concentric ring can be used in other filter configurations, but it is not the conventional perturbation used to couple the two degenerate modes."
       },
-      "correctAnswer": "a",
+      "correctAnswer": "b",
       "difficulty": "beginner"
     },
     {
-      "question": "This is a Sample Question 2?",
+      "question": "Q2. In a conventional dual-mode ring resonator filter, the introduction of a perturbation element splits the single resonant frequency peak into two distinct resonant frequencies. What does this frequency splitting achieve?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "It transforms the filter behavior into a low-pass filter with infinite attenuation.",
+        "b": "It doubles the characteristic impedance (Z0) of the system without affecting performance.",
+        "c": "It produces a second-order bandpass filter response and can introduce transmission zeros for better selectivity.",
+        "d": "It cancels out all radiation losses, making the unloaded Q-factor approach infinity."
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "Frequency splitting does not transform the ring filter into a low-pass filter.",
+        "b": "The perturbation does not simply double the characteristic impedance of the system.",
+        "c": "Correct. Splitting the degenerate resonant mode into two nearby resonances provides the two poles required for a second-order bandpass response and can be used to improve filter selectivity.",
+        "d": "Mode splitting does not eliminate radiation or other losses, and it cannot make the unloaded Q-factor infinite."
       },
       "correctAnswer": "c",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q3. For a microstrip ring resonator filter operating at its fundamental frequency, at what angular positions (relative to the input feed point at 0 degrees) do the voltage maxima (nodes) occur along the ring?",
+      "answers": {
+        "a": "At 45 degrees and 135 degrees.",
+        "b": "At 90 degrees and 270 degrees.",
+        "c": "At 0 degrees and 180 degrees.",
+        "d": "Voltage is perfectly uniform at all angles across the ring perimeter."
+      },
+      "explanations": {
+        "a": "The 45-degree and 135-degree positions are not the standard locations of the fundamental voltage maxima for the ring configuration described.",
+        "b": "Correct. For the fundamental standing-wave distribution around the ring, the voltage maxima occur at positions separated by 180 degrees, corresponding to 90 degrees and 270 degrees relative to the specified feed point.",
+        "c": "These positions do not correspond to the voltage maxima for the stated reference configuration.",
+        "d": "The voltage distribution is not uniform around a resonant ring; standing waves produce distinct maxima and minima."
+      },
+      "correctAnswer": "c",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q4. What is a primary disadvantage of a basic microstrip ring resonator filter regarding its wideband performance?",
+      "answers": {
+        "a": "It can only handle low-power signals below 1 milliwatt.",
+        "b": "It completely lacks any resonant behavior if the temperature fluctuates by one degree.",
+        "c": "It suffers from periodic spurious passbands at integer multiples of the fundamental resonant frequency (2f0, 3f0, etc.).",
+        "d": "It cannot be measured using standard 50-ohm vector network analyzers."
+      },
+      "explanations": {
+        "a": "A basic microstrip ring resonator is not inherently limited to signals below 1 milliwatt.",
+        "b": "Temperature changes can shift the resonant frequency, but they do not eliminate the resonant behavior completely.",
+        "c": "Correct. Ring resonators support higher-order modes, which can produce unwanted periodic spurious passbands at frequencies related to multiples of the fundamental resonance.",
+        "d": "Microstrip ring filters can be characterized using standard 50-ohm vector network analyzers."
+      },
+      "correctAnswer": "c",
+      "difficulty": "beginner"
+    },
+    {
+      "question": "Q5. To eliminate or suppress the unwanted harmonic responses (spurious passbands) in a microwave ring filter, which design technique is widely implemented?",
+      "answers": {
+        "a": "Replacing the copper microstrip line with high-resistance carbon filament.",
+        "b": "Using stepped-impedance resonators (SIR) or integrating defected ground structures (DGS).",
+        "c": "Removing the bottom ground plane entirely beneath the feeding structure.",
+        "d": "Decreasing the width of the ring until it reaches the manufacturing limit."
+      },
+      "explanations": {
+        "a": "Replacing copper with a high-resistance material would increase losses and is not a standard technique for suppressing spurious responses.",
+        "b": "Correct. Stepped-impedance resonators (SIR) and defected ground structures (DGS) are widely used techniques for controlling higher-order resonances and suppressing unwanted spurious passbands.",
+        "c": "Removing the ground plane would disrupt normal microstrip operation rather than provide controlled harmonic suppression.",
+        "d": "Reducing the ring width is not a reliable or standard method for eliminating higher-order spurious responses."
+      },
+      "correctAnswer": "b",
       "difficulty": "beginner"
     }
   ]
